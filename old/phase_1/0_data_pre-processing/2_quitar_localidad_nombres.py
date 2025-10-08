@@ -1,8 +1,8 @@
 from Bio import SeqIO
 
 # Lee el archivo fasta
-input_file = "eKOI_metabarcoding_database_ver2.fasta"
-output_file = "eKOI_metabarcoding_database_clean.fasta"
+input_file = "/data/eKOI_metabarcoding_database_ver2.fasta"
+output_file = "/data/eKOI_metabarcoding_database_clean.fasta"
 
 with open(output_file, "w") as output_handle:
     for record in SeqIO.parse(input_file, "fasta"):

@@ -19,14 +19,14 @@ They are intended to help with FASTA preprocessing and taxonomy assignment using
 ### Example
 ```bash
 python fasta_preprocess.py \
-  -i /data/raw/eKOI_metabarcoding_database_ver2.fasta \
+  -i /data/raw/eKOI_metabarcoding_database.fasta \
   -t /data/raw/seq_headers.txt \
-  -o /data/procesed/cleaned_sequences.fasta
+  -o /data/procesed/eKOI_metabarcoding_database_cleaned.fasta
 ```  
 ###  Outputs
 
 - `seq_headers.txt` → all sequence headers without >
-- `cleaned_sequences.fasta` → FASTA file with simplified identifiers
+- `eKOI_metabarcoding_database_cleaned.fasta` → FASTA file with simplified identifiers
 
 
 ## 2) `vsearch_taxonomy.py`
@@ -56,11 +56,11 @@ python vsearch_taxonomy.py -d reference.fasta -i 0.84 -f /path/to/fasta_folder -
 
 **Results created next to each FASTA file**
 ```bash
-python vsearch_taxonomy.py -d /raw/eKOI.fasta -i 0.84 -f /data/procesed/cleaned_sequences.fasta
+python vsearch_taxonomy.py -d /raw/eKOI.fasta -i 0.84 -f /data/procesed/eKOI_metabarcoding_database_cleaned.fasta
 ```
 **Results centralized in one folder**
 ```bash
-python vsearch_taxonomy.py -d eKOI_ver1.fasta -i 0.84 -f /data/procesed/cleaned_sequences.fasta -o /data/vsearch_results/
+python vsearch_taxonomy.py -d eKOI_ver1.fasta -i 0.84 -f /data/procesed/eKOI_metabarcoding_database_cleaned.fasta -o /data/vsearch_results/
 ```
 
 ### Outputs per FASTA file

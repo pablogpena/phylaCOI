@@ -60,7 +60,7 @@ python vsearch_taxonomy.py -d /raw/eKOI.fasta -i 0.84 -f /data/procesed/cleaned_
 ```
 **Results centralized in one folder**
 ```bash
-python vsearch_taxonomy.py -d eKOI_ver1.fasta -i 0.84 -f /data/fastas -o /data/vsearch_results/
+python vsearch_taxonomy.py -d eKOI_ver1.fasta -i 0.84 -f /data/procesed/cleaned_sequences.fasta -o /data/vsearch_results/
 ```
 
 ### Outputs per FASTA file

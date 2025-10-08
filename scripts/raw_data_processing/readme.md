@@ -56,11 +56,11 @@ python vsearch_taxonomy.py -d reference.fasta -i 0.84 -f /path/to/fasta_folder -
 
 **Results created next to each FASTA file**
 ```bash
-python vsearch_taxonomy.py -d eKOI_ver1.fasta -i 0.84 -f /data/fastas
+python vsearch_taxonomy.py -d /raw/eKOI.fasta -i 0.84 -f /data/procesed/cleaned_sequences.fasta
 ```
 **Results centralized in one folder**
 ```bash
-python vsearch_taxonomy.py -d eKOI_ver1.fasta -i 0.84 -f /data/fastas -o /results/vsearch
+python vsearch_taxonomy.py -d eKOI_ver1.fasta -i 0.84 -f /data/fastas -o /data/vsearch_results/
 ```
 
 ### Outputs per FASTA file

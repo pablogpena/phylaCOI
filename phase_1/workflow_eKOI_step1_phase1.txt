@@ -1,0 +1,120 @@
+## WORKFLOW COMPLETO DEL PROYECTO eKOI METABARCODING
+
+---
+
+### FASE 0: FASTA original por filo
+┌─────────────────────────────┐
+│ Amoebozoa_eKOI_*.fasta      │
+└─────────────────────────────┘
+             │
+             ▼
+
+---
+
+### SCRIPT 1: Build abundance tables + MAFFT
+Descripción:
+Genera las tablas de abundancia y los alineamientos MAFFT a partir de los archivos FASTA originales por filo.
+
+Salida:
+output/
+├─ abundances.csv                 ← tabla con ID, Localities, coordenadas
+├─ abundances_unique.csv          ← tabla filtrada (IDs únicos)
+├─ unique_sequences.fasta         ← secuencias con IDs únicos
+└─ aligned_sequences_mafft.fasta  ← alineamiento MAFFT (opcional)
+
+---
+
+### SCRIPT 2: Actualizar abundancias
+Descripción:
+Actualiza las abundancias finales por localidad después de la curación de secuencias o metadatos.
+
+Salida:
+output/
+└─ abundances_unique_actualizado.csv  ← abundancias finales por localidad
+
+---
+
+### SCRIPT 3: Clustering OTUs con VSEARCH
+Descripción:
+Agrupa las secuencias únicas en OTUs mediante VSEARCH, generando centroides y asignaciones de secuencias.
+
+Salida:
+otus/
+├─ aligned_sequences_cleaned.fasta  ← FASTA sin gaps
+├─ otus.fasta                       ← secuencias centroides de OTUs
+├─ otus.uc                          ← detalle del clustering VSEARCH
+└─ otus_mapping.txt                 ← relación secuencia → OTU
+
+---
+
+### SCRIPT 4: Filtrado de OTUs informativas (distancias genéticas y geográficas)
+Descripción:
+Selecciona OTUs informativas según las distancias genéticas (p-dist) y geográficas entre secuencias dentro de cada OTU.
+
+Salida:
+otus/
+├─ informative_OTU.txt              ← lista de OTUs informativas
+└─ filtered_otu_distances.csv       ← distancias genéticas y geográficas
+                                      por pares de secuencias dentro de OTUs
+
+---
+
+### SCRIPT 5: Asignación de haplotipos por OTU (multi-filo)
+Descripción:
+Asigna haplotipos a las secuencias dentro de cada OTU informativa y genera una tabla final combinando diversidad, abundancia y conectividad.
+
+Salida:
+output/
+└─ abundances_filtered_haplotypes.csv  ← tabla final con:
+                                         ID, Localities, coordenadas,
+                                         Abundancia, OTU, Haplotype
+
+---
+
+### SCRIPT 6_1: Integración multi-filo (combinación de resultados)
+Descripción:
+Combina los resultados de todos los filos (div_abun_conn_combined.csv) en un solo archivo maestro, añadiendo una columna con el nombre del filo.
+
+Salida:
+root_folder/
+├─ filo_1/output/div_abun_conn_combined.csv
+├─ filo_2/output/div_abun_conn_combined.csv
+│         ...
+└─ div_abun_conn_combined_master.csv   ← archivo maestro combinado
+
+---
+
+### SCRIPT 6_2: Análisis estadístico y modelado multivariado
+Descripción:
+Analiza las relaciones entre diversidad, abundancia y conectividad por filo.
+Ajusta distintos modelos (lineal, exponencial, potencia, Gompertz y GAM), evalúa su ajuste (AIC, BIC, R²), calcula correlaciones (Spearman, Mantel) y realiza pruebas de permutación para comparar pendientes entre métricas.
+Genera gráficas y redes de correlaciones globales.
+
+Salida:
+outputs/
+├─ resultados_modelos_combinados_10otus_modif.csv
+├─ predicciones_modelos_combinadas_10otus_modif.csv
+├─ correlaciones_multivariadas.csv
+├─ comparaciones_metricas_permutaciones_10otus_modif.csv
+├─ pendientes_metricas_por_modelo_10otus_modif.csv
+├─ model_comparision_all_modif.pdf
+├─ model_comparision_200km_modif.pdf
+├─ heatmap_correlations.pdf
+├─ network_correlation.pdf
+└─ mi_entorno_6_2.RData
+
+---
+
+### SCRIPT 7: Heatmaps comparativos entre filos (modelo exponencial NLS)
+Descripción:
+Genera visualizaciones de las diferencias observadas entre filos en el modelo exponencial (nls).
+Crea heatmaps de diferencias y significancia por variable (diversity, log_abundance, log_connections), y heatmaps jerárquicos con dendrogramas para agrupar filos por similitud.
+
+Salida:
+outputs/
+├─ heatmap_diversity.pdf
+├─ heatmap_abundance.pdf
+├─ heatmap_connections.pdf
+├─ matriz_abundance_observed_diff.csv
+├─ matriz_abundance_p_value.csv
+└─ prueba_abundance.pdf   ← heatmap con dendrograma (pheatmap)

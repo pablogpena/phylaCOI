@@ -1,4 +1,4 @@
----
+<!-- #raw -->
 # get_abundance.py
 
 ## Description
@@ -25,8 +25,7 @@ vsearch_results/
 ```
 Each phylum folder must contain **one FASTA file**.  
 The mapping and metadata files are provided once for all analyses.
-
----
+<!-- #endraw -->
 
 ## Usage
 

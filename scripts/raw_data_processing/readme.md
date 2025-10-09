@@ -1,3 +1,5 @@
+<!-- #raw -->
+---
 # Raw Data Processing
 
 This folder contains two scripts:
@@ -7,7 +9,6 @@ This folder contains two scripts:
 
 They are intended to help with FASTA preprocessing and taxonomy assignment using **vsearch**.
 
----
 
 ## 1) `fasta_preprocess.py`
 
@@ -64,12 +65,32 @@ python vsearch_taxonomy.py -d /data/raw/eKOI_database.fasta -i 0.84 -f /data/pro
 ```
 
 ### Outputs per FASTA file
+For each input FASTA, the script automatically creates a **subfolder named after each taxonomic group** (e.g. `Arthropoda`, `Mollusca`, `Chordata`).  
+Each of these folders contains the corresponding group-specific FASTA file.
+
 - `*_results.txt` → Raw vsearch output (BLAST6 format)  
 - `*_results.xlsx` → Results in Excel format  
 - `*_results_filtered.xlsx` → Filtered results (≥ identity threshold)  
-- `{group_name}_*.fasta` → Group-specific FASTA files by taxonomic rank 5  
+- `{group_name}/sequences.fasta` → FASTA file for each taxonomic group (rank 5)  
 
----
+Example structure:
+
+```
+vsearch_results/
+├── eKOI_metabarcoding_cleaned_results.txt
+├── eKOI_metabarcoding_cleaned_results.xlsx
+├── eKOI_metabarcoding_cleaned_results_filtered.xlsx
+│
+├── Arthropoda/
+│ └── Arthropoda_eKOI_metabarcoding_cleaned.fasta
+│
+├── Mollusca/
+│ └── Mollusca_eKOI_metabarcoding_cleaned.fasta
+│
+└── Chordata/
+└── Chordata_eKOI_metabarcoding_cleaned.fasta
+```
+<!-- #endraw -->
 
 ## Requirements
 

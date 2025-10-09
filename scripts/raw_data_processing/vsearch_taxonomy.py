@@ -100,7 +100,11 @@ if __name__ == "__main__":
 
         # Group by taxonomic rank 5 (index 4)
         for group_name, group_df in df_filtered.groupby(df_filtered["Subject"].str[4]):
-            fasta_out = folder / f"{group_name}_{fasta_file.stem}.fasta"
+            phylum_folder = folder / str(group_name)
+            phylum_folder.mkdir(parents=True, exist_ok=True)
+            
+            # Write FASTA file inside the phylum folder
+            fasta_out = phylum_folder / f"{group_name}_{fasta_file.stem}.fasta"
             seq_names = set(group_df["Query"].tolist())
 
             with open(fasta_file, "r") as original, open(fasta_out, "w") as out:

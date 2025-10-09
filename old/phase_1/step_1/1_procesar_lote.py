@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 Recorre múltiples carpetas con archivos FASTA y ejecuta el análisis
 automatizado definido en run_pipeline() desde procesar_fasta_unico.py.

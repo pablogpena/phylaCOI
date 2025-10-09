@@ -34,9 +34,9 @@ The mapping and metadata files are provided once for all analyses.
 
 ```bash
 python scripts/get_abundance/get_abundance.py \
-  -f /workspace/PhylaCOI/data/filos \
-  -n /workspace/PhylaCOI/data/seq_headers.txt \
-  -m /workspace/PhylaCOI/data/KOI_metadata.csv \
+  -f /workspace/PhylaCOI/data//vsearch_results/ \
+  -n /workspace/PhylaCOI/data/raw/seq_headers.txt \
+  -m /workspace/PhylaCOI/data/raw/KOI_metadata.csv \
   -a 1
 ```
 ### Arguments
@@ -62,9 +62,19 @@ For each phylum subfolder, a new folder `/output` will be created containing the
 ### Example Output Structure
 ```
 Phylum1/
-├── Phylum1_eKOI_metabarcoding_cleaned.fasta
+├── Phylum1.fasta
 └── output/
     ├── abundances.csv
     ├── unique_sequences.fasta
     └── aligned_sequences_mafft.fasta
  ```
+ ## Requirements
+
+To run `get_abundance.py`, the following dependencies are required:
+
+- **Python ≥ 3.8**
+- **MAFFT** (must be installed and accessible in the system PATH)
+
+```bash
+
+```

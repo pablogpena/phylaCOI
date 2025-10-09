@@ -71,7 +71,7 @@ Each of these folders contains the corresponding group-specific FASTA file.
 - `*_results.txt` → Raw vsearch output (BLAST6 format)  
 - `*_results.xlsx` → Results in Excel format  
 - `*_results_filtered.xlsx` → Filtered results (≥ identity threshold)  
-- `Phylum/Phylum_eKOI_metabarcoding_cleaned.fasta` → FASTA file for each taxonomic group (rank 5)  
+- `Phylum/Phylum.fasta` → FASTA file for each taxonomic group (rank 5)  
 
 Example structure:
 
@@ -82,13 +82,13 @@ vsearch_results/
 ├── eKOI_metabarcoding_cleaned_results_filtered.xlsx
 │
 ├── Phylum1/
-│ └── Phylum1_eKOI_metabarcoding_cleaned.fasta
+│ └── Phylum1.fasta
 │
 ├── Phylum2/
-│ └── Phylum2_eKOI_metabarcoding_cleaned.fasta
+│ └── Phylum2.fasta
 │
 └── Phylum3/
-└── Phylum3_eKOI_metabarcoding_cleaned.fasta
+└── Phylum3.fasta
 ```
 <!-- #endraw -->
 

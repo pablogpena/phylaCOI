@@ -1,10 +1,10 @@
+---
 # get_abundance.py
 
 ## Description
 `get_abundance.py` iterates through subfolders representing different phyla and runs the abundance and alignment pipeline defined in `fasta_processing.py`.  
 For each phylum, it identifies the FASTA file, mapping file, and metadata file, generates a complete abundance table with read counts and coordinates, creates a FASTA file with unique sequence identifiers, and optionally performs sequence alignment using MAFFT.
 
----
 
 ## Input Requirements
 The script assumes the following directory structure:
@@ -16,10 +16,10 @@ vsearch_results/
 ├── *_results_filtered.xlsx # Filtered results by identity threshold
 │
 ├── Phylum1/
-│ └── sequences.fasta
+│ └──  Phylum1_eKOI_metabarcoding_cleaned.fasta
 │
 ├── Phylum2/
-│ └── sequences.fasta
+│ └── Phylum2_eKOI_metabarcoding_cleaned.fasta
 │
 └── ...
 ```
@@ -38,7 +38,7 @@ python scripts/get_abundance/get_abundance.py \
   -n /workspace/PhylaCOI/data/seq_headers.txt \
   -m /workspace/PhylaCOI/data/KOI_metadata.csv \
   -a 1
-```  
+```
 ### Arguments
 
   | Argument | Type | Required | Description |
@@ -62,7 +62,7 @@ For each phylum subfolder, a new folder `/output` will be created containing the
 ### Example Output Structure
 ```
 Phylum1/
-├── sequences.fasta
+├── Phylum1_eKOI_metabarcoding_cleaned.fasta
 └── output/
     ├── abundances.csv
     ├── unique_sequences.fasta

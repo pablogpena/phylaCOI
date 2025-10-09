@@ -73,7 +73,3 @@ To run `get_abundance.py`, the following dependencies are required:
 
 - **Python ≥ 3.8**
 - **MAFFT** (must be installed and accessible in the system PATH)
-
-```bash
-
-```

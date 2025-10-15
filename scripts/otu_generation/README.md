@@ -9,7 +9,7 @@ For each folder containing an `output` subdirectory, the script removes gaps fro
 The script assumes the following directory structure:
 
 ```
-root_directory/
+PhylaCOI/
 ├── Phylum1/
 │   └── output/
 │       └── aligned_sequences_mafft.fasta

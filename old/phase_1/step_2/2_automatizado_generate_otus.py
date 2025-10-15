@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from pathlib import Path
 import subprocess
 
@@ -55,7 +56,7 @@ def process_folder(folder: Path):
     cleaned_fasta = out_dir / CLEANED_FASTA
     otus_fasta    = out_dir / OTUS_FASTA
     otus_uc       = out_dir / OTUS_UC
-    mapping_txt   = out_dir / OTU_MAPPING_TXT
+    mapping_txt   = out_dir / "otus_mapping.txt"
 
     clean_fasta(in_fasta, cleaned_fasta)
 

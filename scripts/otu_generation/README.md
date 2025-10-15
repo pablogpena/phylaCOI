@@ -1,11 +1,9 @@
 <!-- #raw -->
+---
 # generate_otus.py
-
 ## Description
 `generate_otus.py` iterates through subfolders within a root directory and generates Operational Taxonomic Units (OTUs) using [VSEARCH](https://github.com/torognes/vsearch).  
 For each folder containing an `output` subdirectory, the script removes gaps from aligned FASTA files, clusters sequences into OTUs based on a user-defined identity threshold, and produces the corresponding centroid and mapping files.
-
----
 
 ## Input Requirements
 The script assumes the following directory structure:
@@ -23,25 +21,22 @@ root_directory/
 
 Each `output` folder must contain one aligned FASTA file named **`aligned_sequences_mafft.fasta`**.  
 The script will automatically create an additional subfolder `/otus/` inside each `output` directory to store the generated results.
-<!-- #endraw -->
 
----
 
 ## Usage
 
 ### Basic Command
 
 ```bash
-python scripts/generate_otus/generate_otus.py   -r /workspace/PhylaCOI/data/aligned_fastas/   -i 0.97
+python scripts/generate_otus/generate_otus.py   -r /workspace/PhylaCOI/data/vsearch_results/   -i 0.97
 ```
 
 To skip VSEARCH execution and perform only FASTA cleaning:
 
 ```bash
-python scripts/generate_otus/generate_otus.py   -r /workspace/PhylaCOI/data/aligned_fastas/   --no-vsearch
+python scripts/generate_otus/generate_otus.py   -r /workspace/PhylaCOI/data/vsearch_results/   --no-vsearch
 ```
 
----
 
 ### Arguments
 
@@ -51,7 +46,6 @@ python scripts/generate_otus/generate_otus.py   -r /workspace/PhylaCOI/data/alig
 | `-i`, `--identity` | Float | No (default: 0.97) | Sequence identity threshold used for clustering with VSEARCH. |
 | `--no-vsearch` | Flag | No | If set, skips the clustering step and only performs FASTA cleaning. |
 
----
 
 ## Output
 
@@ -76,7 +70,6 @@ Phylum1/
         └── otus_mapping.txt
 ```
 
----
 
 ## Requirements
 
@@ -90,15 +83,9 @@ Python standard library modules used:
 - `pathlib`
 - `subprocess`
 
----
 
 ## Notes
 - The script automatically scans all subfolders under the specified root directory that contain an `output` subdirectory.  
 - The expected input file name is fixed as `aligned_sequences_mafft.fasta`.  
 - Ensure VSEARCH is correctly installed and callable via the command `vsearch`.
-
----
-
-## License
-This script is provided for research and academic use.  
-Please cite appropriately if used in a publication.
+<!-- #endraw -->

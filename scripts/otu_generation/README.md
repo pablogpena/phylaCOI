@@ -9,7 +9,7 @@ For each folder containing an `output` subdirectory, the script removes gaps fro
 The script assumes the following directory structure:
 
 ```
-PhylaCOI/
+root_directory/
 ├── Phylum1/
 │   └── output/
 │       └── aligned_sequences_mafft.fasta
@@ -88,4 +88,90 @@ Python standard library modules used:
 - The script automatically scans all subfolders under the specified root directory that contain an `output` subdirectory.  
 - The expected input file name is fixed as `aligned_sequences_mafft.fasta`.  
 - Ensure VSEARCH is correctly installed and callable via the command `vsearch`.
+
+
+---
+
+# run_distance_pipeline.R
+## Description
+`run_distance_pipeline.R` iterates through phylum subdirectories within a specified base directory, computes genetic and geographic distance matrices, and identifies *informative OTUs* based on distance thresholds.  
+This script automates the post-processing step of the OTU pipeline, linking sequence data with spatial coordinates and filtering for meaningful genetic variation.
+
+## Input Requirements
+The script assumes the following directory structure for each phylum:
+
+```
+Phylum1/
+└── output/
+    ├── abundances.csv
+    ├── aligned_sequences_mafft.fasta
+    └── otus/
+        ├── otus_mapping.txt
+        ├── otus.fasta
+        ├── otus.uc
+        └── aligned_sequences_cleaned.fasta
+```
+
+Required input files:
+- **`abundances.csv`** – Table containing sample IDs, sequence abundance, latitude, and longitude.
+- **`aligned_sequences_mafft.fasta`** – Aligned nucleotide sequences used to compute pairwise genetic distances.
+- **`otus_mapping.txt`** – Two-column tab-separated file mapping unique sequence IDs to OTUs (output of `generate_otus.py`).
+
+Each phylum directory must include an `output` subfolder with the files above.
+
+## Usage
+
+### Basic Command
+
+```bash
+Rscript run_distance_pipeline.R -i /workspace/PhylaCOI/data/vsearch_results/
+```
+
+The `-i` (or `--input`) flag specifies the base directory containing the phylum subfolders to process.
+
+### Arguments
+
+| Argument | Type | Required | Description |
+|-----------|------|-----------|-------------|
+| `-i`, `--input` | Path | Yes | Path to the base directory containing phylum subfolders with `output` data. |
+
+## Output
+
+For each phylum, the script produces an output file inside its corresponding OTU folder:
+
+| File | Description |
+|-------|-------------|
+| `informative_OTUs.txt` | List of OTUs with ≥ 0.01 genetic distance and ≥ 1 m geographic distance, considered informative for downstream analyses. |
+
+### Example Output Structure
+```
+Phylum1/
+└── output/
+    ├── abundances.csv
+    ├── aligned_sequences_mafft.fasta
+    └── otus/
+        ├── otus_mapping.txt
+        ├── informative_OTUs.txt
+        ├── otus.fasta
+        ├── otus.uc
+        └── aligned_sequences_cleaned.fasta
+```
+
+## Requirements
+
+To run `run_distance_pipeline.R`, the following dependencies are required:
+
+- **R ≥ 4.0**
+- R packages:
+  - `Biostrings`
+  - `ape`
+  - `geosphere`
+  - `dplyr`
+
+## Notes
+- The script automatically scans all phylum directories under the specified base path.  
+- Only OTUs with at least four unique sequences are evaluated.  
+- Informative OTUs are defined by both minimum genetic (≥ 0.01) and geographic (≥ 1 m) distance thresholds.  
+- This script complements `generate_otus.py` by identifying the most relevant OTUs for diversity and connectivity analyses.
+
 <!-- #endraw -->

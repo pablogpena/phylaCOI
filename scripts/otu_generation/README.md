@@ -1,4 +1,3 @@
-<!-- #raw -->
 ---
 # generate_otus.py
 ## Description
@@ -90,11 +89,10 @@ Python standard library modules used:
 - Ensure VSEARCH is correctly installed and callable via the command `vsearch`.
 
 
----
 
-# run_distance_pipeline.R
+# get_informative_otus.R
 ## Description
-`run_distance_pipeline.R` iterates through phylum subdirectories within a specified base directory, computes genetic and geographic distance matrices, and identifies *informative OTUs* based on distance thresholds.  
+`get_informative_otus.R` iterates through phylum subdirectories within a specified base directory, computes genetic and geographic distance matrices, and identifies *informative OTUs* based on distance thresholds.  
 This script automates the post-processing step of the OTU pipeline, linking sequence data with spatial coordinates and filtering for meaningful genetic variation.
 
 ## Input Requirements
@@ -124,7 +122,7 @@ Each phylum directory must include an `output` subfolder with the files above.
 ### Basic Command
 
 ```bash
-Rscript run_distance_pipeline.R -i /workspace/PhylaCOI/data/vsearch_results/
+Rscript get_informative_otus.R -i /workspace/PhylaCOI/data/vsearch_results/
 ```
 
 The `-i` (or `--input`) flag specifies the base directory containing the phylum subfolders to process.
@@ -174,4 +172,4 @@ To run `run_distance_pipeline.R`, the following dependencies are required:
 - Informative OTUs are defined by both minimum genetic (≥ 0.01) and geographic (≥ 1 m) distance thresholds.  
 - This script complements `generate_otus.py` by identifying the most relevant OTUs for diversity and connectivity analyses.
 
-<!-- #endraw -->
+---

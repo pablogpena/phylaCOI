@@ -1,4 +1,4 @@
----
+<!-- #raw -->
 # generate_otus.py
 ## Description
 `generate_otus.py` iterates through subfolders within a root directory and generates Operational Taxonomic Units (OTUs) using [VSEARCH](https://github.com/torognes/vsearch).  
@@ -171,5 +171,4 @@ To run `run_distance_pipeline.R`, the following dependencies are required:
 - Only OTUs with at least four unique sequences are evaluated.  
 - Informative OTUs are defined by both minimum genetic (≥ 0.01) and geographic (≥ 1 m) distance thresholds.  
 - This script complements `generate_otus.py` by identifying the most relevant OTUs for diversity and connectivity analyses.
-
----
+<!-- #endraw -->

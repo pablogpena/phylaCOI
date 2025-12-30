@@ -16,42 +16,19 @@ suppressPackageStartupMessages({
 })
 
 resolve_input_files <- function(phylum_path) {
-  # Prefer the updated abundance file, but fall back to the new pipeline output.
-  abundance_candidates <- c(
-    file.path(phylum_path, "output", "abundances_unique_actualizado.csv"),
-    file.path(phylum_path, "output", "abundances.csv"),
-    file.path(phylum_path, "output", "abundances_unique.csv")
-  )
+  # Use the refactored pipeline output directly.
+  abundances_file <- file.path(phylum_path, "output", "abundances.csv")
 
-  abundances_file <- NA_character_
-  for (candidate in abundance_candidates) {
-    if (file.exists(candidate)) {
-      abundances_file <- candidate
-      break
-    }
-  }
-
-  informative_candidates <- c(
-    file.path(phylum_path, "output", "otus", "informative_OTUs.txt"),
-    file.path(phylum_path, "output", "otus", "informative_OTU.txt")
-  )
-
-  informative_otus_file <- NA_character_
-  for (candidate in informative_candidates) {
-    if (file.exists(candidate)) {
-      informative_otus_file <- candidate
-      break
-    }
-  }
+  informative_otus_file <- file.path(phylum_path, "output", "otus", "informative_OTUs.txt")
 
   alignment_file <- file.path(phylum_path, "output", "aligned_sequences_mafft.fasta")
   otu_mapping_file <- file.path(phylum_path, "output", "otus", "otus_mapping.txt")
 
-  if (is.na(abundances_file)) {
+  if (!file.exists(abundances_file)) {
     warning("Missing abundance file in: ", basename(phylum_path))
     return(NULL)
   }
-  if (is.na(informative_otus_file)) {
+  if (!file.exists(informative_otus_file)) {
     warning("Missing informative OTU list in: ", basename(phylum_path))
     return(NULL)
   }
@@ -568,8 +545,8 @@ compute_diversity_metrics <- function(abundances_grouped, alignment_dnabin, conn
   )
 }
 
-build_maps <- function(phylum_path, diversity_results, abundance_distances, connections_distances) {
-  output_dir <- file.path(phylum_path, "output")
+build_maps <- function(output_dir, diversity_results, abundance_distances, connections_distances) {
+  dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
   if (nrow(diversity_results) > 0) {
     pal_div <- leaflet::colorNumeric("viridis", domain = diversity_results$diversity)
@@ -805,43 +782,43 @@ process_phylum <- function(
     by = c("OTU", "cluster")
   )
 
-  output_dir <- file.path(phylum_path, "output")
-  dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
+  metrics_dir <- file.path(phylum_path, "output", "informative_otus_metrics")
+  dir.create(metrics_dir, showWarnings = FALSE, recursive = TRUE)
 
   write.csv(
     diversity_outputs$diversity_metrics,
-    file.path(output_dir, "otu_metrics_diversity.csv"),
+    file.path(metrics_dir, "otu_metrics_diversity.csv"),
     row.names = FALSE
   )
   write.csv(
     diversity_outputs$diversity_distances %>% dplyr::select(-seqs),
-    file.path(output_dir, "diversity_vs_distance.csv"),
+    file.path(metrics_dir, "diversity_vs_distance.csv"),
     row.names = FALSE
   )
   write.csv(
     abundance_outputs$abundance_metrics,
-    file.path(output_dir, "otu_metrics_abundance.csv"),
+    file.path(metrics_dir, "otu_metrics_abundance.csv"),
     row.names = FALSE
   )
   write.csv(
     abundance_outputs$abundance_distances,
-    file.path(output_dir, "abundance_vs_distance.csv"),
+    file.path(metrics_dir, "abundance_vs_distance.csv"),
     row.names = FALSE
   )
   write.csv(
     connection_outputs$connections_distances,
-    file.path(output_dir, "otu_metrics_connections.csv"),
+    file.path(metrics_dir, "otu_metrics_connections.csv"),
     row.names = FALSE
   )
   write.csv(
     final_combined,
-    file.path(output_dir, "div_abun_conn_combined.csv"),
+    file.path(metrics_dir, "div_abun_conn_combined.csv"),
     row.names = FALSE
   )
 
   if (write_maps) {
     build_maps(
-      phylum_path,
+      metrics_dir,
       diversity_outputs$diversity_results,
       abundance_outputs$abundance_distances,
       connection_outputs$connections_distances

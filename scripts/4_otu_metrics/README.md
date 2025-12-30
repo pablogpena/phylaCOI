@@ -1,4 +1,12 @@
-# OTU Metrics (diversity, abundance, connections)
+otu_metrics_diversity.csv
+diversity_vs_distance.csv
+otu_metrics_abundance.csv
+abundance_vs_distance.csv
+otu_metrics_connections.csv
+div_abun_conn_combined.csv
+otu_nucleotide_diversity_map.html
+otu_log_abundance_map.html
+otu_log_connections_map.html# OTU Metrics (diversity, abundance, connections)
 
 ## Description
 `get_div_abun_conn.R` computes nucleotide diversity, abundance-distance, and haplotype-network
@@ -10,12 +18,11 @@ structure produced by the earlier pipeline steps.
 root/
 ├── Phylum1/
 │   └── output/
-│       ├── abundances_unique_actualizado.csv
 │       ├── abundances.csv
 │       ├── aligned_sequences_mafft.fasta
 │       └── otus/
 │           ├── otus_mapping.txt
-│           └── informative_OTUs.txt (or informative_OTU.txt)
+│           └── informative_OTUs.txt
 └── Phylum2/
     └── output/
         └── ...
@@ -23,7 +30,7 @@ root/
 
 ## Usage
 ```bash
-Rscript scripts/otu_metrics/get_div_abun_conn.R -i /workspace/PhylaCOI/data/vsearch_results
+Rscript scripts/4_otu_metrics/get_div_abun_conn.R -i /workspace/PhylaCOI/data/vsearch_results
 ```
 
 ### Optional Flags
@@ -32,7 +39,7 @@ Rscript scripts/otu_metrics/get_div_abun_conn.R -i /workspace/PhylaCOI/data/vsea
 - `--cluster-radius-km` Spatial clustering radius in km (default: 5).
 
 ## Outputs
-For each phylum, results are written to its `output/` folder:
+For each phylum, results are written to `output/informative_otus_metrics/`:
 - `otu_metrics_diversity.csv`
 - `diversity_vs_distance.csv`
 - `otu_metrics_abundance.csv`

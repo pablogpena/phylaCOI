@@ -33,7 +33,7 @@ The mapping and metadata files are provided once for all analyses.
 
 ```bash
 python scripts/get_abundance/get_abundance.py \
-  -f /workspace/PhylaCOI/data//vsearch_results/ \
+  -f /workspace/PhylaCOI/data/vsearch_results/ \
   -n /workspace/PhylaCOI/data/raw/seq_headers.txt \
   -m /workspace/PhylaCOI/data/raw/KOI_metadata.csv \
   -a 1

@@ -32,17 +32,19 @@ The mapping and metadata files are provided once for all analyses.
 ### Basic Command
 
 ```bash
-python scripts/get_abundance/get_abundance.py \
-  -f /workspace/PhylaCOI/data/vsearch_results/ \
-  -n /workspace/PhylaCOI/data/raw/seq_headers.txt \
-  -m /workspace/PhylaCOI/data/raw/KOI_metadata.csv \
+python scripts/2_abundance_estimation/get_abundance.py \
+  -i data/vsearch_results \
+  -o data/abundance \
+  -n data/raw/seq_headers.txt \
+  -m data/raw/KOI_metadata.csv \
   -a 1
 ```
 ### Arguments
 
   | Argument | Type | Required | Description |
 |-----------|------|-----------|-------------|
-| `-f`, `--folder` | Path | Yes | Path to the root folder containing the phylum subfolders (e.g. `/data/vsearch_results/`). |
+| `-i`, `--input` | Path | Yes | Path to the root folder containing the phylum subfolders (e.g. `/data/vsearch_results/`). |
+| `-o`, `--output` | Path | Yes | Path to the root folder where per-phylum outputs will be written (e.g. `/data/abundance/`). |
 | `-n`, `--names` | Path | Yes | Full path to the sequence mapping file (e.g. `/data/raw/seq_headers.txt`). |
 | `-m`, `--metadata` | Path | Yes | Full path to the metadata file (e.g. `/data/raw/KOI_metadata.csv`). |
 | `-a`, `--mafft` | Integer (0 or 1) | Yes | Whether to run MAFFT alignment (`1`) or skip it (`0`). |
@@ -50,7 +52,7 @@ python scripts/get_abundance/get_abundance.py \
 
 ## Output
 
-For each phylum subfolder, a new folder `/output` will be created containing the following files:
+For each phylum, a new folder will be created under the output root containing the following files:
 
 | File | Description |
 |-------|-------------|
@@ -60,14 +62,15 @@ For each phylum subfolder, a new folder `/output` will be created containing the
 
 ### Example Output Structure
 ```
-Phylum1/
-├── Phylum1.fasta
-└── output/
+abundance/
+└── Phylum1/
     ├── abundances.csv
     ├── unique_sequences.fasta
     └── aligned_sequences_mafft.fasta
- ```
- ## Requirements
+```
+This folder is the input for step 3 (OTU generation).
+
+## Requirements
 
 To run `get_abundance.py`, the following dependencies are required:
 

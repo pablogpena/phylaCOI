@@ -2,24 +2,22 @@
 # generate_otus.py
 ## Description
 `generate_otus.py` iterates through subfolders within a root directory and generates Operational Taxonomic Units (OTUs) using [VSEARCH](https://github.com/torognes/vsearch).  
-For each folder containing an `output` subdirectory, the script removes gaps from aligned FASTA files, clusters sequences into OTUs based on a user-defined identity threshold, and produces the corresponding centroid and mapping files.
+For each phylum folder in the abundance output, the script removes gaps from aligned FASTA files, clusters sequences into OTUs based on a user-defined identity threshold, and produces the corresponding centroid and mapping files.
 
 ## Input Requirements
 The script assumes the following directory structure:
 
 ```
-root_directory/
+abundance/
 ├── Phylum1/
-│   └── output/
-│       └── aligned_sequences_mafft.fasta
+│   └── aligned_sequences_mafft.fasta
 ├── Phylum2/
-│   └── output/
-│       └── aligned_sequences_mafft.fasta
+│   └── aligned_sequences_mafft.fasta
 └── ...
 ```
 
-Each `output` folder must contain one aligned FASTA file named **`aligned_sequences_mafft.fasta`**.  
-The script will automatically create an additional subfolder `/otus/` inside each `output` directory to store the generated results.
+Each phylum folder must contain one aligned FASTA file named **`aligned_sequences_mafft.fasta`**.  
+The script will create a matching phylum folder under the OTU output root to store the results.
 
 
 ## Usage
@@ -27,13 +25,19 @@ The script will automatically create an additional subfolder `/otus/` inside eac
 ### Basic Command
 
 ```bash
-python scripts/generate_otus/generate_otus.py   -r /workspace/PhylaCOI/data/vsearch_results/   -i 0.97
+python scripts/3_otu_generation/generate_otus.py \
+  -a data/abundance \
+  -o data/otus \
+  -i 0.97
 ```
 
 To skip VSEARCH execution and perform only FASTA cleaning:
 
 ```bash
-python scripts/generate_otus/generate_otus.py   -r /workspace/PhylaCOI/data/vsearch_results/   --no-vsearch
+python scripts/3_otu_generation/generate_otus.py \
+  -a data/abundance \
+  -o data/otus \
+  --no-vsearch
 ```
 
 
@@ -41,14 +45,15 @@ python scripts/generate_otus/generate_otus.py   -r /workspace/PhylaCOI/data/vsea
 
 | Argument | Type | Required | Description |
 |-----------|------|-----------|-------------|
-| `-r`, `--root` | Path | Yes | Path to the root directory containing subfolders with aligned FASTA files. |
+| `-a`, `--abundance` | Path | Yes | Path to the root directory containing per-phylum abundance outputs. |
+| `-o`, `--otus` | Path | Yes | Path to the root directory where per-phylum OTU outputs will be written. |
 | `-i`, `--identity` | Float | No (default: 0.97) | Sequence identity threshold used for clustering with VSEARCH. |
 | `--no-vsearch` | Flag | No | If set, skips the clustering step and only performs FASTA cleaning. |
 
 
 ## Output
 
-For each processed phylum folder, an `otus/` subdirectory will be created within its `output/` directory containing:
+For each processed phylum folder, a matching folder will be created within the OTU output root containing:
 
 | File | Description |
 |-------|-------------|
@@ -59,15 +64,14 @@ For each processed phylum folder, an `otus/` subdirectory will be created within
 
 ### Example Output Structure
 ```
-Phylum1/
-└── output/
-    ├── aligned_sequences_mafft.fasta
-    └── otus/
-        ├── aligned_sequences_cleaned.fasta
-        ├── otus.fasta
-        ├── otus.uc
-        └── otus_mapping.txt
+otus/
+└── Phylum1/
+    ├── aligned_sequences_cleaned.fasta
+    ├── otus.fasta
+    ├── otus.uc
+    └── otus_mapping.txt
 ```
+This folder is used by `get_informative_otus.R` and step 4 (OTU metrics).
 
 
 ## Requirements
@@ -84,7 +88,7 @@ Python standard library modules used:
 
 
 ## Notes
-- The script automatically scans all subfolders under the specified root directory that contain an `output` subdirectory.  
+- The script automatically scans all phylum folders under the specified abundance root.  
 - The expected input file name is fixed as `aligned_sequences_mafft.fasta`.  
 - Ensure VSEARCH is correctly installed and callable via the command `vsearch`.
 
@@ -99,15 +103,17 @@ This script automates the post-processing step of the OTU pipeline, linking sequ
 The script assumes the following directory structure for each phylum:
 
 ```
-Phylum1/
-└── output/
+abundance/
+└── Phylum1/
     ├── abundances.csv
-    ├── aligned_sequences_mafft.fasta
-    └── otus/
-        ├── otus_mapping.txt
-        ├── otus.fasta
-        ├── otus.uc
-        └── aligned_sequences_cleaned.fasta
+    └── aligned_sequences_mafft.fasta
+
+otus/
+└── Phylum1/
+    ├── otus_mapping.txt
+    ├── otus.fasta
+    ├── otus.uc
+    └── aligned_sequences_cleaned.fasta
 ```
 
 Required input files:
@@ -115,23 +121,26 @@ Required input files:
 - **`aligned_sequences_mafft.fasta`** – Aligned nucleotide sequences used to compute pairwise genetic distances.
 - **`otus_mapping.txt`** – Two-column tab-separated file mapping unique sequence IDs to OTUs (output of `generate_otus.py`).
 
-Each phylum directory must include an `output` subfolder with the files above.
+Each phylum directory must include the files above under the abundance and otus roots.
 
 ## Usage
 
 ### Basic Command
 
 ```bash
-Rscript get_informative_otus.R -i /workspace/PhylaCOI/data/vsearch_results/
+Rscript scripts/3_otu_generation/get_informative_otus.R \
+  -a data/abundance \
+  -o data/otus
 ```
 
-The `-i` (or `--input`) flag specifies the base directory containing the phylum subfolders to process.
+The `-a` flag points to the abundance root and `-o` to the OTU root.
 
 ### Arguments
 
 | Argument | Type | Required | Description |
 |-----------|------|-----------|-------------|
-| `-i`, `--input` | Path | Yes | Path to the base directory containing phylum subfolders with `output` data. |
+| `-a`, `--abundance` | Path | Yes | Path to the base directory containing per-phylum abundance outputs. |
+| `-o`, `--otus` | Path | Yes | Path to the base directory containing per-phylum OTU outputs. |
 
 ## Output
 
@@ -143,21 +152,18 @@ For each phylum, the script produces an output file inside its corresponding OTU
 
 ### Example Output Structure
 ```
-Phylum1/
-└── output/
-    ├── abundances.csv
-    ├── aligned_sequences_mafft.fasta
-    └── otus/
-        ├── otus_mapping.txt
-        ├── informative_OTUs.txt
-        ├── otus.fasta
-        ├── otus.uc
-        └── aligned_sequences_cleaned.fasta
+otus/
+└── Phylum1/
+    ├── otus_mapping.txt
+    ├── informative_OTUs.txt
+    ├── otus.fasta
+    ├── otus.uc
+    └── aligned_sequences_cleaned.fasta
 ```
 
 ## Requirements
 
-To run `run_distance_pipeline.R`, the following dependencies are required:
+To run `get_informative_otus.R`, the following dependencies are required:
 
 - **R ≥ 4.0**
 - R packages:
@@ -167,7 +173,7 @@ To run `run_distance_pipeline.R`, the following dependencies are required:
   - `dplyr`
 
 ## Notes
-- The script automatically scans all phylum directories under the specified base path.  
+- The script automatically scans all phylum directories under the OTU root.  
 - Only OTUs with at least four unique sequences are evaluated.  
 - Informative OTUs are defined by both minimum genetic (≥ 0.01) and geographic (≥ 1 m) distance thresholds.  
 - This script complements `generate_otus.py` by identifying the most relevant OTUs for diversity and connectivity analyses.

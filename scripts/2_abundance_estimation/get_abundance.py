@@ -14,28 +14,36 @@ runs MAFFT for sequence alignment.
 
 Usage
 -----
-python scripts/get_abundance/get_abundance.py \
-    -f /path/to/root_folder \
+python scripts/2_abundance_estimation/get_abundance.py \
+    -i /path/to/vsearch_results \
+    -o /path/to/abundance \
     -n nombres_secuencias.txt \
     -m metadata.csv \
-    [--skip-mafft]
+    -a 1
 """
 
+import argparse
 import os
 import sys
 from pathlib import Path
-import argparse
 
-sys.path.append('/workspace/PhylaCOI')
-from src.fasta_processing.fasta_processing import run_pipeline
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parents[2]
+sys.path.append(str(PROJECT_ROOT))
+
+from src.fasta_utils.fasta_processing import run_pipeline
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Run abundance and alignment pipeline for all phylum folders."
     )
     parser.add_argument(
-        "-f", "--folder", required=True, type=Path,
-        help="Root folder containing subfolders (one per phylum)."
+        "-i", "--input", required=True, type=Path,
+        help="Root folder containing per-phylum FASTA files."
+    )
+    parser.add_argument(
+        "-o", "--output", required=True, type=Path,
+        help="Root folder where per-phylum abundance outputs will be written."
     )
     parser.add_argument(
         "-n", "--names", required=True, type=Path,
@@ -51,7 +59,8 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    base_dir = args.folder
+    base_dir = args.input
+    output_root = args.output
     names_path = args.names
     meta_path = args.metadata
     run_mafft_flag = bool(args.mafft)
@@ -66,7 +75,9 @@ if __name__ == "__main__":
         print(f"[ERROR] Metadata file not found: {meta_path}")
         sys.exit(1)
 
+    output_root.mkdir(parents=True, exist_ok=True)
     print(f"Starting pipeline in root folder: {base_dir}")
+    print(f"Writing outputs to: {output_root}")
 
     total = 0
     processed = 0
@@ -88,8 +99,8 @@ if __name__ == "__main__":
             continue
 
         fasta_path = fasta_files[0]
-        output_dir = phylum_path / "output"
-        output_dir.mkdir(exist_ok=True)
+        output_dir = output_root / phylum_folder
+        output_dir.mkdir(parents=True, exist_ok=True)
 
         print(f"  Running pipeline for {phylum_folder}")
         try:

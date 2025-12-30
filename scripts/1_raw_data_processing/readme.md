@@ -20,9 +20,9 @@ They are intended to help with FASTA preprocessing and taxonomy assignment using
 ### Example
 ```bash
 python fasta_preprocess.py \
-  -i /data/raw/eKOI_metabarcoding.fasta \
-  -t /data/raw/seq_headers.txt \
-  -o /data/procesed/eKOI_metabarcoding_cleaned.fasta
+  -i data/raw/eKOI_metabarcoding.fasta \
+  -t data/raw/seq_headers.txt \
+  -o data/procesed/eKOI_metabarcoding_cleaned.fasta
 ```  
 ###  Outputs
 
@@ -57,11 +57,11 @@ python vsearch_taxonomy.py -d reference.fasta -i 0.84 -f /path/to/fasta_folder -
 
 **Results created next to each FASTA file**
 ```bash
-python vsearch_taxonomy.py -d /data/raw/eKOI_database.fasta -i 0.84 -f /data/procesed/eKOI_metabarcoding_cleaned.fasta
+python vsearch_taxonomy.py -d data/raw/eKOI_database.fasta -i 0.84 -f data/procesed/eKOI_metabarcoding_cleaned.fasta
 ```
 **Results centralized in one folder**
 ```bash
-python vsearch_taxonomy.py -d /data/raw/eKOI_database.fasta -i 0.84 -f /data/procesed/eKOI_metabarcoding_cleaned.fasta -o /data/vsearch_results/
+python vsearch_taxonomy.py -d data/raw/eKOI_database.fasta -i 0.84 -f data/procesed/eKOI_metabarcoding_cleaned.fasta -o data/vsearch_results/
 ```
 
 ### Outputs per FASTA file
@@ -90,6 +90,7 @@ vsearch_results/
 └── Phylum3/
 └── Phylum3.fasta
 ```
+This folder is the input for step 2 (abundance estimation).
 <!-- #endraw -->
 
 ## Requirements

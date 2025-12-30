@@ -1,10 +1,9 @@
 # +
-from .fasta_processing import (
+from .otu_processing import (
     _clean_fasta,
     _run_vsearch,
     _build_mapping,
-    process_folder,
-    
+    process_phylum,
 )
 # -
 
@@ -12,5 +11,5 @@ __all__ = [
     "_clean_fasta",
     "_run_vsearch",
     "_build_mapping",
-    "process_folder",
+    "process_phylum",
 ]

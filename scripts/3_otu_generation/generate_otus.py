@@ -3,21 +3,31 @@
 # -*- coding: utf-8 -*-
 # -
 
-from pathlib import Path
-from otu_utils import process_folder
+import argparse
 import sys
-sys.path.append('/workspace/PhylaCOI')
-from src.otu_utils import process_folder
+from pathlib import Path
+
+SCRIPT_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = SCRIPT_DIR.parents[2]
+sys.path.append(str(PROJECT_ROOT))
+
+from src.otu_utils.otu_processing import process_phylum
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description="Generate OTUs per folder by cleaning FASTA files and performing clustering with VSEARCH."
     )
     parser.add_argument(
-        "-r", "--root",
-        type=str,
+        "-a", "--abundance",
+        type=Path,
         required=True,
-        help="Root directory containing subfolders with an 'output' subdirectory. Created in the previus step (get_abundance.py)"
+        help="Root directory containing per-phylum abundance outputs."
+    )
+    parser.add_argument(
+        "-o", "--otus",
+        type=Path,
+        required=True,
+        help="Root directory where per-phylum OTU outputs will be written."
     )
     parser.add_argument(
         "-i", "--identity",
@@ -32,10 +42,18 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
-    root_dir = Path(args.root)
+    abundance_root = args.abundance
+    otus_root = args.otus
     run_vsearch_flag = not args.no_vsearch
 
-    for folder in root_dir.iterdir():
-        if folder.is_dir() and (folder / "output").is_dir():
-            print(f"Processing: {folder.name}")
-            process_folder(folder, args.identity, run_vsearch_flag)
+    if not abundance_root.exists():
+        raise SystemExit(f"[ERROR] Input folder not found: {abundance_root}")
+
+    otus_root.mkdir(parents=True, exist_ok=True)
+
+    for phylum_dir in abundance_root.iterdir():
+        if not phylum_dir.is_dir():
+            continue
+        print(f"Processing: {phylum_dir.name}")
+        output_dir = otus_root / phylum_dir.name
+        process_phylum(phylum_dir, output_dir, args.identity, run_vsearch_flag)

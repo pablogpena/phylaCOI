@@ -15,25 +15,25 @@ suppressPackageStartupMessages({
   library(tibble)
 })
 
-resolve_input_files <- function(phylum_path) {
-  # Use the refactored pipeline output directly.
-  abundances_file <- file.path(phylum_path, "output", "abundances.csv")
+resolve_input_files <- function(phylum_name, abundance_root, otus_root) {
+  abundance_dir <- file.path(abundance_root, phylum_name)
+  otus_dir <- file.path(otus_root, phylum_name)
 
-  informative_otus_file <- file.path(phylum_path, "output", "otus", "informative_OTUs.txt")
-
-  alignment_file <- file.path(phylum_path, "output", "aligned_sequences_mafft.fasta")
-  otu_mapping_file <- file.path(phylum_path, "output", "otus", "otus_mapping.txt")
+  abundances_file <- file.path(abundance_dir, "abundances.csv")
+  informative_otus_file <- file.path(otus_dir, "informative_OTUs.txt")
+  alignment_file <- file.path(abundance_dir, "aligned_sequences_mafft.fasta")
+  otu_mapping_file <- file.path(otus_dir, "otus_mapping.txt")
 
   if (!file.exists(abundances_file)) {
-    warning("Missing abundance file in: ", basename(phylum_path))
+    warning("Missing abundance file in: ", phylum_name)
     return(NULL)
   }
   if (!file.exists(informative_otus_file)) {
-    warning("Missing informative OTU list in: ", basename(phylum_path))
+    warning("Missing informative OTU list in: ", phylum_name)
     return(NULL)
   }
   if (!file.exists(alignment_file) || !file.exists(otu_mapping_file)) {
-    warning("Missing alignment or OTU mapping in: ", basename(phylum_path))
+    warning("Missing alignment or OTU mapping in: ", phylum_name)
     return(NULL)
   }
 
@@ -46,13 +46,9 @@ resolve_input_files <- function(phylum_path) {
 }
 
 normalize_abundance_column <- function(abundances) {
-  # Standardize abundance column naming across legacy and refactored pipelines.
-  if (!"Abundance" %in% names(abundances) && "Abundancia" %in% names(abundances)) {
-    abundances$Abundance <- abundances$Abundancia
-  }
-
+  # Ensure the refactored abundance column exists.
   if (!"Abundance" %in% names(abundances)) {
-    stop("Missing abundance column. Expected 'Abundance' or 'Abundancia'.")
+    stop("Missing abundance column: Abundance.")
   }
 
   abundances$Abundance <- as.numeric(abundances$Abundance)
@@ -676,17 +672,18 @@ build_maps <- function(output_dir, diversity_results, abundance_distances, conne
 }
 
 process_phylum <- function(
-  phylum_path,
+  phylum_name,
+  abundance_root,
+  otus_root,
   cluster_radius_m = 5000,
   max_sequences_per_otu = 500,
   write_maps = TRUE
 ) {
-  phylum_name <- basename(phylum_path)
   message("\n========================")
   message("Processing phylum: ", phylum_name)
   message("========================")
 
-  input_files <- resolve_input_files(phylum_path)
+  input_files <- resolve_input_files(phylum_name, abundance_root, otus_root)
   if (is.null(input_files)) {
     return(NULL)
   }
@@ -782,7 +779,7 @@ process_phylum <- function(
     by = c("OTU", "cluster")
   )
 
-  metrics_dir <- file.path(phylum_path, "output", "informative_otus_metrics")
+  metrics_dir <- file.path(otus_root, phylum_name, "informative_otus_metrics")
   dir.create(metrics_dir, showWarnings = FALSE, recursive = TRUE)
 
   write.csv(

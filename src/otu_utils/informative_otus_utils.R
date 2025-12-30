@@ -7,14 +7,16 @@ suppressPackageStartupMessages({
 })
 
 # Main function to process a single phylum
-process_phylum <- function(phylum_path) {
-  phylum_name <- basename(phylum_path)
+process_phylum <- function(phylum_name, abundance_root, otus_root) {
   message("Processing: ", phylum_name)
   
+  abundance_dir <- file.path(abundance_root, phylum_name)
+  otus_dir <- file.path(otus_root, phylum_name)
+
   # Define input paths
-  abundances_file    <- file.path(phylum_path, "output", "abundances.csv")
-  aligned_fasta_file <- file.path(phylum_path, "output", "aligned_sequences_mafft.fasta")
-  otus_file          <- file.path(phylum_path, "output", "otus", "otus_mapping.txt")
+  abundances_file    <- file.path(abundance_dir, "abundances.csv")
+  aligned_fasta_file <- file.path(abundance_dir, "aligned_sequences_mafft.fasta")
+  otus_file          <- file.path(otus_dir, "otus_mapping.txt")
   
   # Check file existence
   if (!file.exists(abundances_file) || !file.exists(aligned_fasta_file) || !file.exists(otus_file)) {
@@ -92,7 +94,7 @@ process_phylum <- function(phylum_path) {
   # -----------------------------------------------------------------------------#
   # Write results
   # -----------------------------------------------------------------------------#
-  otus_keep_file <- file.path(phylum_path, "output", "otus", "informative_OTUs.txt")
+  otus_keep_file <- file.path(otus_dir, "informative_OTUs.txt")
   writeLines(otus_keep, otus_keep_file)
   
   message("Informative OTUs saved to: ", otus_keep_file)

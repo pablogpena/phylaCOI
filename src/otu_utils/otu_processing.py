@@ -45,34 +45,34 @@ def _build_mapping(uc_file: Path, dest: Path):
     print(f"Mapping file written to: {dest}")
 
 
-def process_folder(folder: Path, identity: float, run_vsearch_flag: bool):
+def process_phylum(input_dir: Path, output_dir: Path, identity: float, run_vsearch_flag: bool):
     """
-    Process a folder containing aligned sequences and generate OTUs.
-    
+    Process a phylum folder containing aligned sequences and generate OTUs.
+
     Parameters
     ----------
-    folder : Path
-        Directory containing an 'output' subfolder with aligned sequences.
+    input_dir : Path
+        Directory containing aligned sequences (aligned_sequences_mafft.fasta).
+    output_dir : Path
+        Directory where OTU outputs will be written.
     identity : float
         Sequence identity threshold for clustering.
     run_vsearch_flag : bool
         Whether to execute VSEARCH (True) or skip clustering (False).
     """
 
-    output_folder = folder / "output"
-    in_fasta = output_folder / "aligned_sequences_mafft.fasta"
+    in_fasta = input_dir / "aligned_sequences_mafft.fasta"
 
     if not in_fasta.exists():
-        print(f"No FASTA file found in {output_folder}. Skipping.")
+        print(f"No FASTA file found in {input_dir}. Skipping.")
         return
 
-    out_dir = output_folder / "otus"
-    out_dir.mkdir(exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
-    cleaned_fasta = out_dir / "aligned_sequences_mafft_cleaned.fasta"
-    otus_fasta = out_dir / "otus.fasta"
-    otus_uc = out_dir / "otus.uc"
-    mapping_txt = out_dir / "otus_mapping.txt"
+    cleaned_fasta = output_dir / "aligned_sequences_cleaned.fasta"
+    otus_fasta = output_dir / "otus.fasta"
+    otus_uc = output_dir / "otus.uc"
+    mapping_txt = output_dir / "otus_mapping.txt"
 
     _clean_fasta(in_fasta, cleaned_fasta)
 
@@ -81,8 +81,8 @@ def process_folder(folder: Path, identity: float, run_vsearch_flag: bool):
             _run_vsearch(cleaned_fasta, otus_fasta, otus_uc, identity)
             _build_mapping(otus_uc, mapping_txt)
         except RuntimeError as err:
-            print(f"VSEARCH failed in {output_folder}: {err}")
+            print(f"VSEARCH failed in {output_dir}: {err}")
     else:
         print("RUN_VSEARCH = False, clustering skipped.")
 
-    print(f"Processing completed for: {output_folder}\n")
+    print(f"Processing completed for: {output_dir}\n")

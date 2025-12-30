@@ -31,11 +31,12 @@ output_dir <- get_flag_value(args, c("-o", "--output"))
 comparisons_file <- get_flag_value(args, c("--comparisons"))
 heatmap_model <- get_flag_value(args, c("--heatmap-model"), default = "nls")
 heatmap_metrics_raw <- get_flag_value(args, c("--heatmap-metrics"))
+min_otus <- get_flag_value(args, c("--min-otus"), default = 10, convert = as.integer)
 
 if (is.null(input_file) || is.null(output_dir)) {
   stop(paste(
     "Usage: Rscript analyze_otu_metrics.R -i <metrics_csv> -o <output_dir>",
-    "[--comparisons <comparison_csv>] [--heatmap-model MODEL] [--heatmap-metrics M1,M2]"
+    "[--min-otus N] [--comparisons <comparison_csv>] [--heatmap-model MODEL] [--heatmap-metrics M1,M2]"
   ))
 }
 
@@ -46,10 +47,39 @@ dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 metrics_data <- read_metrics_table(input_file)
 metrics_data <- add_scaled_metrics(metrics_data)
 
+if (is.na(min_otus) || min_otus < 1) {
+  stop("--min-otus must be a positive integer.")
+}
+
+# Keep only phyla with at least the requested number of unique OTUs.
+otu_counts <- metrics_data %>%
+  group_by(phylum) %>%
+  summarise(otu_count = n_distinct(OTU), .groups = "drop")
+
+eligible_phyla <- otu_counts %>%
+  filter(otu_count >= min_otus) %>%
+  pull(phylum)
+
+filtered_data <- metrics_data %>% filter(phylum %in% eligible_phyla)
+
+if (length(eligible_phyla) == 0) {
+  stop("No phyla meet the minimum OTU threshold (", min_otus, ").")
+}
+
+if (length(eligible_phyla) < length(unique(metrics_data$phylum))) {
+  removed <- setdiff(unique(metrics_data$phylum), eligible_phyla)
+  message(
+    "Excluded phyla with fewer than ",
+    min_otus,
+    " OTUs: ",
+    paste(removed, collapse = ", ")
+  )
+}
+
 # Model fitting per metric.
-res_abundance <- fit_models_for_metric(metrics_data, "scaled_log_abundance", "log_abundance")
-res_diversity <- fit_models_for_metric(metrics_data, "scaled_diversity", "diversity")
-res_connections <- fit_models_for_metric(metrics_data, "scaled_log_connections", "log_connections")
+res_abundance <- fit_models_for_metric(filtered_data, "scaled_log_abundance", "log_abundance")
+res_diversity <- fit_models_for_metric(filtered_data, "scaled_diversity", "diversity")
+res_connections <- fit_models_for_metric(filtered_data, "scaled_log_connections", "log_connections")
 
 model_summary <- bind_rows(
   res_abundance$results,
@@ -81,7 +111,7 @@ plot_model_comparison(
 )
 
 # Spearman correlations and plots.
-cor_outputs <- compute_spearman_correlations(metrics_data)
+cor_outputs <- compute_spearman_correlations(filtered_data)
 write.csv(
   cor_outputs$cor_total,
   file = file.path(output_dir, "spearman_correlations.csv"),
@@ -105,7 +135,7 @@ metric_pairs <- list(
 )
 model_types <- c("lm", "power", "gam", "nls", "gompertz")
 
-perm_results <- run_metric_permutation_tests(metrics_data, metric_pairs, model_types, B = 999)
+perm_results <- run_metric_permutation_tests(filtered_data, metric_pairs, model_types, B = 999)
 write.csv(
   perm_results,
   file = file.path(output_dir, "metric_slope_permutation_tests.csv"),
@@ -113,11 +143,11 @@ write.csv(
 )
 
 slopes_all <- bind_rows(
-  get_all_slopes(metrics_data, "lm"),
-  get_all_slopes(metrics_data, "power"),
-  get_all_slopes(metrics_data, "gam"),
-  get_all_slopes(metrics_data, "nls"),
-  get_all_slopes(metrics_data, "gompertz")
+  get_all_slopes(filtered_data, "lm"),
+  get_all_slopes(filtered_data, "power"),
+  get_all_slopes(filtered_data, "gam"),
+  get_all_slopes(filtered_data, "nls"),
+  get_all_slopes(filtered_data, "gompertz")
 )
 write.csv(
   slopes_all,

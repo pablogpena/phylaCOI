@@ -26,7 +26,8 @@ Optionally, you can provide a phylum-comparison table with columns:
 ```bash
 Rscript scripts/5_metrics_analysis/analyze_otu_metrics.R \
   -i data/otus/div_abun_conn_master.csv \
-  -o data/analysis/otu_metrics_summary
+  -o data/analysis/otu_metrics_summary \
+  --min-otus 10
 ```
 
 ### With Phylum Comparison Heatmaps
@@ -44,12 +45,14 @@ Rscript scripts/5_metrics_analysis/analyze_otu_metrics.R \
 |-----------|------|-----------|-------------|
 | `-i`, `--input` | Path | Yes | Path to the combined metrics CSV (`div_abun_conn_master.csv`). |
 | `-o`, `--output` | Path | Yes | Output directory for summary tables and plots. |
+| `--min-otus` | Integer | No (default: 10) | Minimum number of unique OTUs required per phylum to include it in analyses. |
 | `--comparisons` | Path | No | Optional phylum-comparison CSV for heatmaps. |
 | `--heatmap-model` | String | No (default: `nls`) | Model to filter in the phylum-comparison heatmaps. |
 | `--heatmap-metrics` | Comma list | No | Comma-separated list of metric names to plot (defaults to all in the file). |
 
 ## Output
 The script writes summary tables and plots to the output directory.
+Only phyla with at least `--min-otus` unique OTUs are included in downstream analyses.
 
 Core outputs:
 - `model_fit_summary.csv`

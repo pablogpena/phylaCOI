@@ -16,6 +16,8 @@ suppressPackageStartupMessages({
   library(pheatmap)
 })
 
+# Check that the combined metrics table has all required columns.
+# Stops with a clear error when any column is missing.
 validate_metrics_columns <- function(df) {
   required <- c(
     "phylum",
@@ -34,12 +36,16 @@ validate_metrics_columns <- function(df) {
   }
 }
 
+# Read the combined metrics CSV and validate its columns.
+# Returns a data frame ready for downstream analysis.
 read_metrics_table <- function(input_file) {
   df <- readr::read_csv(input_file, show_col_types = FALSE)
   validate_metrics_columns(df)
   df
 }
 
+# Scale a numeric vector to [0, 1] with NA-safe handling.
+# Returns NA values when scaling is not possible.
 scale_to_unit <- function(x) {
   if (all(is.na(x))) {
     return(rep(NA_real_, length(x)))
@@ -55,6 +61,8 @@ scale_to_unit <- function(x) {
   (x - x_min) / (x_max - x_min)
 }
 
+# Add scaled versions of abundance, diversity, and connections.
+# Returns the updated data frame.
 add_scaled_metrics <- function(df) {
   df %>%
     mutate(
@@ -64,6 +72,8 @@ add_scaled_metrics <- function(df) {
     )
 }
 
+# Map a response column name to the matching distance column.
+# Throws an error for unknown metrics.
 distance_column_for <- function(response_col) {
   if (grepl("diversity", response_col)) {
     return("distance_km_diversity")
@@ -78,6 +88,8 @@ distance_column_for <- function(response_col) {
   stop("Unrecognized response column: ", response_col)
 }
 
+# Fit multiple models per phylum for a given metric.
+# Returns summary stats and prediction tables.
 fit_models_for_metric <- function(data, response_col, metric_label) {
   distance_col <- distance_column_for(response_col)
 
@@ -295,6 +307,8 @@ fit_models_for_metric <- function(data, response_col, metric_label) {
   )
 }
 
+# Reshape prediction outputs into a long format for plotting.
+# Adds a unified distance column per metric.
 build_predictions_long <- function(predictions) {
   predictions %>%
     tidyr::pivot_longer(
@@ -312,6 +326,8 @@ build_predictions_long <- function(predictions) {
     )
 }
 
+# Plot model prediction curves by phylum and metric.
+# Saves a PDF to the requested output path.
 plot_model_comparison <- function(predictions_long, output_path) {
   plot <- ggplot(predictions_long, aes(x = distance, y = predicted, color = model)) +
     geom_line() +
@@ -327,6 +343,8 @@ plot_model_comparison <- function(predictions_long, output_path) {
   plot
 }
 
+# Compute Spearman correlations globally and per phylum.
+# Returns correlation tables and the comparison pairs.
 compute_spearman_correlations <- function(data) {
   comparisons <- list(
     c("log_abundance", "diversity"),
@@ -380,6 +398,8 @@ compute_spearman_correlations <- function(data) {
   )
 }
 
+# Plot per-phylum Spearman correlations as bar charts.
+# Writes one PDF per comparison pair.
 plot_spearman_bars <- function(cor_phylum_df, comparisons, output_dir) {
   for (pair in comparisons) {
     var1 <- pair[1]
@@ -407,6 +427,8 @@ plot_spearman_bars <- function(cor_phylum_df, comparisons, output_dir) {
   }
 }
 
+# Plot a per-phylum heatmap of Spearman correlations.
+# Saves the figure to the output path.
 plot_spearman_heatmap <- function(cor_total, output_path) {
   plot <- ggplot(
     cor_total %>% filter(phylum != "Global"),
@@ -436,6 +458,8 @@ plot_spearman_heatmap <- function(cor_total, output_path) {
   plot
 }
 
+# Plot a global correlation network from Spearman coefficients.
+# Saves the network plot to a PDF.
 plot_spearman_network <- function(cor_global_df, output_path) {
   edges <- cor_global_df %>%
     select(from = variable_x, to = variable_y, rho)
@@ -454,8 +478,12 @@ plot_spearman_network <- function(cor_global_df, output_path) {
   plot
 }
 
+# Return the left value if non-null, otherwise the right value.
+# Useful for defaulting optional arguments.
 `%||%` <- function(a, b) if (!is.null(a)) a else b
 
+# Estimate the slope at a reference distance using multiple model types.
+# Returns a single numeric slope or NA on failure.
 get_slope <- function(df, yvar, model_type = "lm", distance_col,
                       x_ref = NULL, gam_k = NULL,
                       eps_log = 1e-8, h_frac = 50) {
@@ -491,6 +519,7 @@ get_slope <- function(df, yvar, model_type = "lm", distance_col,
     } else if (model_type == "gam") {
       k_use <- gam_k %||% max(5, min(10, floor(n / 3)))
       fit <- mgcv::gam(y ~ s(x, k = k_use), method = "REML")
+      # Helper to predict the GAM response at a given distance.
       pred <- function(xx) predict(fit, newdata = data.frame(x = xx), type = "response")
       (pred(x_ref + h) - pred(x_ref - h)) / (2 * h)
     } else if (model_type == "nls") {
@@ -556,10 +585,12 @@ get_slope <- function(df, yvar, model_type = "lm", distance_col,
   })
 }
 
+# Permute metric labels to test slope differences within a phylum.
+# Returns observed differences and p-values per model.
 permutation_test_slope <- function(data, phylum, model_type,
-                                   metric1 = "scaled_log_abundance",
-                                   metric2 = "scaled_diversity",
-                                   B = 999) {
+                                  metric1 = "scaled_log_abundance",
+                                  metric2 = "scaled_diversity",
+                                  B = 999) {
   df <- data %>%
     filter(phylum == !!phylum) %>%
     filter(!is.na(.data[[metric1]]), !is.na(.data[[metric2]]))
@@ -569,6 +600,7 @@ permutation_test_slope <- function(data, phylum, model_type,
     return(tibble(phylum = phylum, model = model_type, observed_diff = NA, p_value = NA, n = n))
   }
 
+  # Helper to map metric names to their distance columns.
   distance_for <- function(metric) case_when(
     metric == "scaled_log_abundance" ~ "distance_km_abundance",
     metric == "scaled_diversity" ~ "distance_km_diversity",
@@ -616,6 +648,8 @@ permutation_test_slope <- function(data, phylum, model_type,
   )
 }
 
+# Run permutation tests across all phyla, metrics, and models.
+# Returns a long table of test results.
 run_metric_permutation_tests <- function(data, metric_pairs, models, B = 999) {
   purrr::pmap_dfr(
     tidyr::expand_grid(
@@ -637,6 +671,8 @@ run_metric_permutation_tests <- function(data, metric_pairs, models, B = 999) {
   )
 }
 
+# Compute slopes for all phyla and metrics for a given model type.
+# Returns a tidy table of slopes.
 get_all_slopes <- function(data, model_type = "lm") {
   phyla <- unique(data$phylum)
   metrics <- c("scaled_log_abundance", "scaled_diversity", "scaled_log_connections")
@@ -667,6 +703,8 @@ get_all_slopes <- function(data, model_type = "lm") {
   )
 }
 
+# Read a phylum-comparison table and normalize key columns.
+# Accepts comma- or semicolon-delimited input.
 read_phylum_comparisons <- function(input_file) {
   required <- c("phylum1", "phylum2", "observed_diff", "p_value", "model", "metric")
   df <- readr::read_delim(input_file, delim = ",", show_col_types = FALSE)
@@ -685,6 +723,8 @@ read_phylum_comparisons <- function(input_file) {
   df
 }
 
+# Convert pairwise comparisons into an upper-triangle matrix view.
+# Flips signs to keep a consistent orientation.
 prepare_half_matrix <- function(data) {
   data %>%
     rowwise() %>%
@@ -704,6 +744,8 @@ prepare_half_matrix <- function(data) {
     )
 }
 
+# Plot a half-matrix heatmap for phylum comparisons.
+# Saves the figure to the provided path.
 plot_phylum_heatmap <- function(data, metric_name, model_name, output_path) {
   df_metric <- data %>%
     filter(metric == metric_name, model == model_name) %>%
@@ -735,6 +777,8 @@ plot_phylum_heatmap <- function(data, metric_name, model_name, output_path) {
   plot
 }
 
+# Build square matrices of observed differences and p-values.
+# Writes the matrices to CSV files in the output directory.
 write_comparison_matrices <- function(data, metric_name, model_name, output_dir) {
   df_metric <- data %>%
     filter(metric == metric_name, model == model_name)
@@ -783,6 +827,8 @@ write_comparison_matrices <- function(data, metric_name, model_name, output_dir)
   list(diff_path = diff_path, pval_path = pval_path)
 }
 
+# Plot a dendrogram heatmap using pheatmap and significance labels.
+# Saves the plot to the provided output path.
 plot_phylum_dendrogram <- function(diff_path, pval_path, metric_name, model_name, output_path) {
   observed_diff <- as.matrix(read.csv(diff_path, row.names = 1, check.names = FALSE))
   p_values <- as.matrix(read.csv(pval_path, row.names = 1, check.names = FALSE))

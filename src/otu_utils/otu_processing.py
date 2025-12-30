@@ -5,7 +5,8 @@ import subprocess
 
 def _clean_fasta(src: Path, dest: Path):
     """
-    Remove gap characters ('-') from an aligned FASTA file and save the cleaned output.
+    Remove gap characters from an aligned FASTA file.
+    Writes the cleaned output to the destination path.
     """
     with src.open() as fin, dest.open("w") as fout:
         for line in fin:
@@ -15,8 +16,8 @@ def _clean_fasta(src: Path, dest: Path):
 
 def _run_vsearch(fasta: Path, centroids: Path, uc_file: Path, identity: float):
     """
-    Execute VSEARCH to cluster sequences into OTUs.
-    
+    Run VSEARCH to cluster sequences into OTUs.
+    Writes centroid and UC outputs to the provided paths.
     """
     cmd = [
         "vsearch",
@@ -33,9 +34,8 @@ def _run_vsearch(fasta: Path, centroids: Path, uc_file: Path, identity: float):
 
 def _build_mapping(uc_file: Path, dest: Path):
     """
-    Generate a mapping file linking sequence IDs to their corresponding OTUs
-    based on a VSEARCH .uc file.
-
+    Build a two-column OTU mapping from a VSEARCH .uc file.
+    Writes the mapping to the destination path.
     """
     with uc_file.open() as fin, dest.open("w") as fout:
         for line in fin:
@@ -47,18 +47,8 @@ def _build_mapping(uc_file: Path, dest: Path):
 
 def process_phylum(input_dir: Path, output_dir: Path, identity: float, run_vsearch_flag: bool):
     """
-    Process a phylum folder containing aligned sequences and generate OTUs.
-
-    Parameters
-    ----------
-    input_dir : Path
-        Directory containing aligned sequences (aligned_sequences_mafft.fasta).
-    output_dir : Path
-        Directory where OTU outputs will be written.
-    identity : float
-        Sequence identity threshold for clustering.
-    run_vsearch_flag : bool
-        Whether to execute VSEARCH (True) or skip clustering (False).
+    Process one phylum folder and generate OTU outputs.
+    Cleans the alignment, runs VSEARCH if enabled, and writes mapping files.
     """
 
     in_fasta = input_dir / "aligned_sequences_mafft.fasta"

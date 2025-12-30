@@ -15,6 +15,8 @@ suppressPackageStartupMessages({
   library(tibble)
 })
 
+# Locate required inputs for a phylum and validate they exist.
+# Returns a named list of paths or NULL if missing.
 resolve_input_files <- function(phylum_name, abundance_root, otus_root) {
   abundance_dir <- file.path(abundance_root, phylum_name)
   otus_dir <- file.path(otus_root, phylum_name)
@@ -45,6 +47,8 @@ resolve_input_files <- function(phylum_name, abundance_root, otus_root) {
   )
 }
 
+# Ensure the Abundance column exists and is numeric.
+# Stops early if the column is missing.
 normalize_abundance_column <- function(abundances) {
   # Ensure the refactored abundance column exists.
   if (!"Abundance" %in% names(abundances)) {
@@ -55,6 +59,8 @@ normalize_abundance_column <- function(abundances) {
   abundances
 }
 
+# Assign haplotypes within each OTU using the alignment.
+# Skips large OTUs and returns filtered abundances and tracking lists.
 assign_haplotypes <- function(abundances, alignment_dnabin, max_sequences_per_otu = 500) {
   # Assign haplotypes within each OTU, skipping OTUs that are too large.
   abundances$Haplotype <- NA_integer_
@@ -101,6 +107,8 @@ assign_haplotypes <- function(abundances, alignment_dnabin, max_sequences_per_ot
   )
 }
 
+# Cluster points by geographic radius using haversine distance.
+# Adds a cluster label per OTU and returns the updated data.
 cluster_points_by_distance <- function(df, threshold_m) {
   # Group sequences into spatial clusters using a fixed radius (meters).
   if (nrow(df) == 0) {
@@ -125,6 +133,8 @@ cluster_points_by_distance <- function(df, threshold_m) {
   df
 }
 
+# Compute abundance summaries, distances, and model fits per OTU.
+# Returns per-cluster data plus metric summaries.
 compute_abundance_metrics <- function(abundances_grouped) {
   empty_results <- tibble::tibble(
     OTU = character(),
@@ -231,6 +241,8 @@ compute_abundance_metrics <- function(abundances_grouped) {
   )
 }
 
+# Build haplotype network connections and per-cluster connectivity metrics.
+# Returns connection distances and summary values per OTU.
 compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, otus_with_network) {
   empty_connections <- tibble::tibble(
     OTU = character(),
@@ -302,6 +314,7 @@ compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, ot
       dplyr::distinct()
 
     coord_map <- otu_data %>% dplyr::select(ID = UniqueID, cluster, lat, lon)
+    # Helper to fetch a coordinate attribute for a given sequence ID.
     get_attr <- function(id, attr) coord_map[[attr]][coord_map$ID == id][1]
 
     all_edges_df <- all_edges_df %>%
@@ -387,6 +400,8 @@ compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, ot
   list(connections_distances = connections_distances)
 }
 
+# Pick a center cluster using diversity, connections, and spatial distance.
+# Returns the index of the selected cluster.
 choose_center_cluster <- function(diversity, n_connections, lon, lat) {
   if (all(is.na(diversity))) {
     return(1)
@@ -416,6 +431,8 @@ choose_center_cluster <- function(diversity, n_connections, lon, lat) {
   idx_best
 }
 
+# Compute nucleotide diversity per cluster and distance-based summaries.
+# Returns per-cluster data and model metrics.
 compute_diversity_metrics <- function(abundances_grouped, alignment_dnabin, connections_distances) {
   empty_results <- tibble::tibble(
     OTU = character(),
@@ -541,6 +558,8 @@ compute_diversity_metrics <- function(abundances_grouped, alignment_dnabin, conn
   )
 }
 
+# Create leaflet maps for diversity, abundance, and connections.
+# Writes HTML files to the output directory.
 build_maps <- function(output_dir, diversity_results, abundance_distances, connections_distances) {
   dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
 
@@ -671,6 +690,8 @@ build_maps <- function(output_dir, diversity_results, abundance_distances, conne
   }
 }
 
+# Run the full OTU metrics pipeline for one phylum.
+# Reads inputs, computes metrics, writes CSVs, and optional maps.
 process_phylum <- function(
   phylum_name,
   abundance_root,

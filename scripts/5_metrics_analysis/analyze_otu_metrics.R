@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-# Driver script for combined OTU metrics analysis and optional heatmaps.
 
 get_script_dir <- function() {
   cmd_args <- commandArgs(trailingOnly = FALSE)

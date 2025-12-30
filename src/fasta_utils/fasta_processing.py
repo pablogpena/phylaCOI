@@ -14,12 +14,8 @@ from typing import List, Tuple
 
 def _extract_id_and_localities(line):
     """
-    Extract sequence ID and localities from a text line.
-
-    Returns
-    -------
-    tuple
-        (seq_id, locs) where each element can be a string or None.
+    Extract the sequence ID and merged_sample block from one line.
+    Returns a (seq_id, locs) tuple or (None, None).
     """
     id_match = re.match(r"(\S+)", line)                     # First token = sequence ID
     loc_match = re.search(r"merged_sample=\{(.*)\}", line)  # Content inside merged_sample={}
@@ -29,7 +25,10 @@ def _extract_id_and_localities(line):
 
 
 def _run_mafft(in_fasta, out_fasta):
-    """Run MAFFT on a FASTA file and save the aligned output. Raises RuntimeError if MAFFT fails."""
+    """
+    Run MAFFT on a FASTA file and save the aligned output.
+    Raises RuntimeError if MAFFT fails.
+    """
     cmd = [
         "mafft", "--auto", "--ep", "1.5", "--op", "3.0",
         "--maxiterate", "0", "--large", str(in_fasta)
@@ -43,7 +42,10 @@ def _run_mafft(in_fasta, out_fasta):
 
 
 def run_pipeline(fasta_path, names_path, meta_path, out_dir, run_mafft_flag=True):
-    """Process FASTA, mapping, and metadata files to generate abundance tables (with abundances), unique sequences, and optional MAFFT alignment."""
+    """
+    Build abundance tables, unique FASTA, and optional MAFFT alignment.
+    Uses the FASTA, mapping names, and metadata inputs for one phylum.
+    """
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # Read FASTA and collect IDs
@@ -120,4 +122,3 @@ def run_pipeline(fasta_path, names_path, meta_path, out_dir, run_mafft_flag=True
             print(f"[ERROR] MAFFT could not complete:\n{err}")
     else:
         print("Alignment step skipped (run_mafft_flag = False).")
-

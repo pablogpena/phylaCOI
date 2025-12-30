@@ -6,7 +6,8 @@ suppressPackageStartupMessages({
   library(dplyr)
 })
 
-# Main function to process a single phylum
+# Process one phylum to identify informative OTUs.
+# Writes the OTU list to the per-phylum OTU folder.
 process_phylum <- function(phylum_name, abundance_root, otus_root) {
   message("Processing: ", phylum_name)
   

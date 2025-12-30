@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # #-------------------
 # # ANÁLISIS
 # #-------------------
@@ -284,7 +285,6 @@ predicciones_largo <- predicciones_largo %>%
   )
 
 
-# +
 write.csv(resultados_modelos_totales, "resultados_modelos_combinados_10otus_modif.csv", row.names = FALSE)
 write.csv(predicciones_largo, "predicciones_modelos_combinadas_10otus_modif.csv", row.names = FALSE)
 
@@ -302,43 +302,10 @@ model_comparision <- ggplot(predicciones_largo, aes(x = distance, y = predicted,
 
 ggsave("model_comparision_all_modif.pdf", plot = model_comparision, width = 8, height = 5)
 model_comparision
-# +
-#PLOT: version solo 200km
-model_comparision_200km <- ggplot(predicciones_largo, aes(x = distance, y = predicted, color = model)) +
-  geom_line() +
-  facet_grid(phylum ~ metric) +
-  labs(
-    title = "Model Comparison by Phylum and Metric",
-    y = "Predicted Value (scaled)",
-    x = "Distance (km)"
-  ) +
-  xlim(0, 202) +   # Limita el eje x entre 0 y 200 km para poder ver bien las correlaciones entre los distintos modelos
-  theme_minimal()
-model_comparision_200km
-
-ggsave("model_comparision_200km_modif.pdf", plot = model_comparision_200km, width = 8, height = 5)
-
-# +
-#PLOT: lm, power, gam solo 200km
-#predicciones_filtradas <- predicciones_largo %>%
-#  filter(model %in% c("linear", "gam", "nls"))
-#model_comparision_lm_power_gam_nls <- ggplot(predicciones_filtradas, aes(x = distance, y = predicted, color = model)) +
-#  geom_line() +
-#  facet_grid(phylum ~ metric) +
-#  labs(
-#    title = "Model Comparison by Phylum and Metric",
-#    y = "Predicted Value (scaled)",
-#    x = "Distance (km)"
-#  ) +
-#  xlim(0, 200) +   # si quieres limitar a 200 km como antes
-#  theme_minimal()
-
-#ggsave("model_comparision_lm_nls_gam.pdf", plot = model_comparision_lm_power_gam_nls, width = 8, height = 5)
 # -
-
-#-----------------------------------------------------
-#####PARTE 2: CORRELACION SPEARMAN
-#-----------------------------------------------------
+# -----------------------------------------------------
+# ####PARTE 2: CORRELACION SPEARMAN
+# -----------------------------------------------------
 
 ######correlacion entre abundancia y diversidad nucleotidica
 # Variables a comparar
@@ -398,6 +365,7 @@ comparisons <- list(
   c("log_abundance", "log_connections")
 )
 
+# +
 #PLOT: Spearman correlation
 plot_list <- purrr::map(comparisons, function(pair) {
   var1 <- pair[1]
@@ -418,7 +386,6 @@ plot_list <- purrr::map(comparisons, function(pair) {
     theme(axis.text.x = element_text(angle = 45, hjust = 1))
 })
 
-# +
 print(plot_list[[1]])
 print(plot_list[[2]])
 print(plot_list[[3]])
@@ -429,7 +396,7 @@ ggsave("plot_2.pdf", plot = plot_list[[2]], device = "pdf", width = 8, height = 
 ggsave("plot_3.pdf", plot = plot_list[[3]], device = "pdf", width = 8, height = 6)
 
 
-
+# +
 #PLOT: Heatmap of Correlations by Phylum
 heatmap_plot <- ggplot(cor_total %>% filter(phylum != "Global"),
                        aes(x = variable_x, y = variable_y, fill = rho)) +
@@ -447,7 +414,6 @@ heatmap_plot <- ggplot(cor_total %>% filter(phylum != "Global"),
 ggsave("heatmap_correlations.pdf", plot = heatmap_plot,
        device = "pdf", width = 10, height = 8)
 # -
-
 
 # Preparar data global
 edges <- cor_total %>% 
@@ -470,7 +436,7 @@ ggsave("network_correlation.pdf", plot = network_plot,
        device = "pdf", width = 8, height = 8)
 
 
-
+# +
 # =======================================================
 # PARTE 3: Calcular pendientes y comparaciones por modelo
 # =======================================================

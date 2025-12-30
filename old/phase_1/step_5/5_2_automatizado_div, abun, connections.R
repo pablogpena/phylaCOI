@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # LIBRERÍAS NECESARIAS
 suppressPackageStartupMessages({
   library(dplyr)

@@ -1,6 +1,7 @@
-###======================================================
+# -*- coding: utf-8 -*-
+# ##======================================================
 # HEATMAPS POR VARIABLE PARA MODELO EXPONENCIAL (nls)
-###======================================================
+# ##======================================================
 
 library(ggplot2)
 library(dplyr)
@@ -87,19 +88,19 @@ pdf("heatmap_diversity.pdf", width = 8, height = 6)
 print(p1)
 dev.off()
 
-#pdf("heatmap_abundance.pdf", width = 8, height = 6)
-#print(p2)
-#dev.off()
+# pdf("heatmap_abundance.pdf", width = 8, height = 6)
+# print(p2)
+# dev.off()
 
-#pdf("heatmap_connections.pdf", width = 8, height = 6)
-#print(p3)
-#dev.off()
+# pdf("heatmap_connections.pdf", width = 8, height = 6)
+# print(p3)
+# dev.off()
 
-###======================================================
+# ##======================================================
 # HEATMAPS CON DENDROGRAMA Y ESCALERA (pheatmap)
-###======================================================
+# ##======================================================
 
-#### 1. PREPARAR LA MATRIZ CUADRADA A PARTIR DEL CSV
+# ### 1. PREPARAR LA MATRIZ CUADRADA A PARTIR DEL CSV
 
 # Cargar librerías
 library(dplyr)
@@ -144,9 +145,9 @@ write.csv(matrix_diff, "matriz_abundance_observed_diff.csv", row.names = TRUE)
 write.csv(matrix_pval, "matriz_abundance_p_value.csv", row.names = TRUE)
 
 
-#-------------------------------------------------
-#### 2. HEATMAP CON DENDROGRAMA (PAQUETE PHEATMAP)
-#-------------------------------------------------
+# -------------------------------------------------
+# ### 2. HEATMAP CON DENDROGRAMA (PAQUETE PHEATMAP)
+# -------------------------------------------------
 
 library(pheatmap)
 library(RColorBrewer)

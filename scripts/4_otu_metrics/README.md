@@ -47,6 +47,29 @@ For each phylum, results are written to `otus/<phylum>/informative_otus_metrics/
 - `otu_log_abundance_map.html`
 - `otu_log_connections_map.html`
 
+Additionally, a combined table across all phyla is written to:
+- `otus/div_abun_conn_master.csv` (includes a `phylum` column)
+
+### Example Output Structure
+```
+otus/
+├── div_abun_conn_master.csv
+└── Phylum1/
+    └── informative_otus_metrics/
+        ├── otu_metrics_diversity.csv
+        ├── diversity_vs_distance.csv
+        ├── otu_metrics_abundance.csv
+        ├── abundance_vs_distance.csv
+        ├── otu_metrics_connections.csv
+        ├── div_abun_conn_combined.csv
+        ├── otu_nucleotide_diversity_map.html
+        ├── otu_log_abundance_map.html
+        └── otu_log_connections_map.html
+```
+
+## Notes
+- The script prints a simple progress bar while processing phyla.
+
 ## Requirements
 - R >= 4.0
 - R packages: Biostrings, ape, geosphere, pegas, mgcv, dplyr, tidyr, leaflet, scales, htmlwidgets, tibble

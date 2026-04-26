@@ -242,7 +242,7 @@ compute_abundance_metrics <- function(abundances_grouped) {
 }
 
 # Build haplotype network connections and per-cluster connectivity metrics.
-# Returns connection distances plus edge/point tables for phase 2.
+# Returns connection distances plus edge/point tables.
 compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, otus_with_network) {
   empty_connections <- tibble::tibble(
     OTU = character(),

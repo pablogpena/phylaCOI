@@ -47,6 +47,10 @@ For each phylum, results are written to `otus/<phylum>/informative_otus_metrics/
 - `otu_log_abundance_map.html`
 - `otu_log_connections_map.html`
 
+For each phylum, haplotype-network tables for phase 2 are written to `otus/<phylum>/haplotype_network/`:
+- `edges_Mi_filo.csv`
+- `points_Mi_filo.csv`
+
 Additionally, a combined table across all phyla is written to:
 - `otus/div_abun_conn_master.csv` (includes a `phylum` column)
 
@@ -55,20 +59,24 @@ Additionally, a combined table across all phyla is written to:
 otus/
 ├── div_abun_conn_master.csv
 └── Phylum1/
-    └── informative_otus_metrics/
-        ├── otu_metrics_diversity.csv
-        ├── diversity_vs_distance.csv
-        ├── otu_metrics_abundance.csv
-        ├── abundance_vs_distance.csv
-        ├── otu_metrics_connections.csv
-        ├── div_abun_conn_combined.csv
-        ├── otu_nucleotide_diversity_map.html
-        ├── otu_log_abundance_map.html
-        └── otu_log_connections_map.html
+    ├── informative_otus_metrics/
+    │   ├── otu_metrics_diversity.csv
+    │   ├── diversity_vs_distance.csv
+    │   ├── otu_metrics_abundance.csv
+    │   ├── abundance_vs_distance.csv
+    │   ├── otu_metrics_connections.csv
+    │   ├── div_abun_conn_combined.csv
+    │   ├── otu_nucleotide_diversity_map.html
+    │   ├── otu_log_abundance_map.html
+    │   └── otu_log_connections_map.html
+    └── haplotype_network/
+        ├── edges_Mi_filo.csv
+        └── points_Mi_filo.csv
 ```
 
 ## Notes
 - The script prints a simple progress bar while processing phyla.
+- `haplotype_network/` is used by the phase 2 haplotype clustering analyses.
 
 ## Requirements
 - R >= 4.0

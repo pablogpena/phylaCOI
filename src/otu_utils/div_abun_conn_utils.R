@@ -242,7 +242,7 @@ compute_abundance_metrics <- function(abundances_grouped) {
 }
 
 # Build haplotype network connections and per-cluster connectivity metrics.
-# Returns connection distances and summary values per OTU.
+# Returns connection distances plus edge/point tables for phase 2.
 compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, otus_with_network) {
   empty_connections <- tibble::tibble(
     OTU = character(),
@@ -256,12 +256,51 @@ compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, ot
     center_lon = numeric(),
     distance_km_connections = numeric()
   )
+  empty_edges <- tibble::tibble(
+    from = character(),
+    to = character(),
+    OTU_ID = character(),
+    group = character(),
+    distancia_genetica = numeric(),
+    x = numeric(),
+    y = numeric(),
+    xend = numeric(),
+    yend = numeric()
+  )
+  empty_points <- tibble::tibble(
+    UniqueID = character(),
+    ID = character(),
+    Localities = character(),
+    OTU_ID = character(),
+    Haplotype = integer(),
+    cluster = character(),
+    lat = numeric(),
+    lon = numeric()
+  )
 
   if (length(otus_with_network) == 0 || nrow(abundances_grouped) == 0) {
-    return(list(connections_distances = empty_connections))
+    return(list(
+      connections_distances = empty_connections,
+      network_edges = empty_edges,
+      network_points = empty_points
+    ))
   }
 
   connections_by_cluster <- list()
+  network_edges_by_otu <- list()
+  network_points <- abundances_grouped %>%
+    dplyr::filter(OTU %in% otus_with_network) %>%
+    dplyr::transmute(
+      UniqueID = UniqueID,
+      ID = ID,
+      Localities = Localities,
+      OTU_ID = OTU,
+      Haplotype = Haplotype,
+      cluster = cluster,
+      lat = lat,
+      lon = lon
+    ) %>%
+    dplyr::distinct()
 
   for (otu in otus_with_network) {
     message("Calculating connections for OTU: ", otu)
@@ -295,6 +334,8 @@ compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, ot
     if (is.null(seq_edges_df)) {
       seq_edges_df <- tibble::tibble(from = character(), to = character())
     }
+    seq_edges_df <- seq_edges_df %>%
+      dplyr::mutate(group = "diff")
 
     haplo_assignments <- tibble::tibble(
       UniqueID = unlist(haplo_to_seq),
@@ -308,14 +349,25 @@ compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, ot
       dplyr::filter(dplyr::n_distinct(cluster) > 1) %>%
       tidyr::expand(from = UniqueID, to = UniqueID) %>%
       dplyr::filter(from != to) %>%
-      dplyr::ungroup()
+      dplyr::ungroup() %>%
+      dplyr::mutate(group = "same")
 
     all_edges_df <- dplyr::bind_rows(seq_edges_df, haplo_edges_df) %>%
       dplyr::distinct()
 
-    coord_map <- otu_data %>% dplyr::select(ID = UniqueID, cluster, lat, lon)
+    coord_map <- otu_data %>%
+      dplyr::select(ID = UniqueID, cluster, lat, lon)
     # Helper to fetch a coordinate attribute for a given sequence ID.
     get_attr <- function(id, attr) coord_map[[attr]][coord_map$ID == id][1]
+
+    genetic_dist_mat <- as.matrix(ape::dist.dna(aln, model = "K80"))
+    # Helper to fetch genetic distance for a sequence pair.
+    get_genetic_distance <- function(from_id, to_id) {
+      if (!from_id %in% rownames(genetic_dist_mat) || !to_id %in% colnames(genetic_dist_mat)) {
+        return(NA_real_)
+      }
+      genetic_dist_mat[from_id, to_id]
+    }
 
     all_edges_df <- all_edges_df %>%
       dplyr::rowwise() %>%
@@ -325,11 +377,25 @@ compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, ot
         from_lat = get_attr(from, "lat"),
         from_lon = get_attr(from, "lon"),
         to_lat = get_attr(to, "lat"),
-        to_lon = get_attr(to, "lon")
+        to_lon = get_attr(to, "lon"),
+        distancia_genetica = get_genetic_distance(from, to)
       ) %>%
       dplyr::ungroup()
 
     all_edges_df <- dplyr::filter(all_edges_df, from_cluster != to_cluster)
+
+    network_edges_by_otu[[as.character(otu)]] <- all_edges_df %>%
+      dplyr::transmute(
+        from = from,
+        to = to,
+        OTU_ID = otu,
+        group = group,
+        distancia_genetica = distancia_genetica,
+        x = from_lon,
+        y = from_lat,
+        xend = to_lon,
+        yend = to_lat
+      )
 
     all_clusters <- otu_data %>%
       dplyr::group_by(cluster) %>%
@@ -370,8 +436,20 @@ compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, ot
   }
 
   connections_raw <- dplyr::bind_rows(connections_by_cluster)
+  network_edges <- dplyr::bind_rows(network_edges_by_otu)
+  if (nrow(network_edges) == 0) {
+    network_edges <- empty_edges
+  }
+  if (nrow(network_points) == 0) {
+    network_points <- empty_points
+  }
+
   if (nrow(connections_raw) == 0) {
-    return(list(connections_distances = empty_connections))
+    return(list(
+      connections_distances = empty_connections,
+      network_edges = network_edges,
+      network_points = network_points
+    ))
   }
 
   connections_summary <- connections_raw %>%
@@ -397,7 +475,11 @@ compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, ot
     ) %>%
     dplyr::ungroup()
 
-  list(connections_distances = connections_distances)
+  list(
+    connections_distances = connections_distances,
+    network_edges = network_edges,
+    network_points = network_points
+  )
 }
 
 # Pick a center cluster using diversity, connections, and spatial distance.
@@ -801,7 +883,9 @@ process_phylum <- function(
   )
 
   metrics_dir <- file.path(otus_root, phylum_name, "informative_otus_metrics")
+  network_dir <- file.path(otus_root, phylum_name, "haplotype_network")
   dir.create(metrics_dir, showWarnings = FALSE, recursive = TRUE)
+  dir.create(network_dir, showWarnings = FALSE, recursive = TRUE)
 
   write.csv(
     diversity_outputs$diversity_metrics,
@@ -833,6 +917,18 @@ process_phylum <- function(
     file.path(metrics_dir, "div_abun_conn_combined.csv"),
     row.names = FALSE
   )
+  write.csv(
+    connection_outputs$network_edges,
+    file.path(network_dir, "edges_Mi_filo.csv"),
+    row.names = FALSE
+  )
+  write.csv(
+    connection_outputs$network_points,
+    file.path(network_dir, "points_Mi_filo.csv"),
+    row.names = FALSE
+  )
+
+  message("Haplotype network files written to: ", network_dir)
 
   if (write_maps) {
     build_maps(

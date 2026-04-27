@@ -157,5 +157,5 @@ analysis/
 
 ## Requirements
 - R >= 4.0
-- Core R packages: dplyr, tidyr, igraph, ggplot2, geosphere, stringr, stringi
-- Optional R packages: spdep, sf, scatterpie, rnaturalearth
+- Core R packages: dplyr, tidyr, igraph, ggplot2, geosphere, spdep, stringr, stringi
+- Optional R packages: sf, scatterpie, rnaturalearth

@@ -7,6 +7,7 @@ suppressPackageStartupMessages({
   library(igraph)
   library(ggplot2)
   library(geosphere)
+  library(spdep)
   library(stringr)
   library(stringi)
 })
@@ -348,10 +349,6 @@ moran_table_by_cluster <- function(
     Freq = integer(),
     q_FDR = character()
   )
-
-  if (!ensure_optional_packages("spdep", "Moran's I")) {
-    return(empty_moran)
-  }
 
   required_cols <- c("Locality", "lon", "lat", cluster_col)
   if (!all(required_cols %in% names(locality_coords_df))) {

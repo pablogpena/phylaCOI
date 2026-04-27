@@ -50,7 +50,7 @@ resolve_input_files <- function(phylum_name, abundance_root, otus_root) {
 # Ensure the Abundance column exists and is numeric.
 # Stops early if the column is missing.
 normalize_abundance_column <- function(abundances) {
-  # Ensure the refactored abundance column exists.
+  # Ensure a standard abundance column exists.
   if (!"Abundance" %in% names(abundances)) {
     stop("Missing abundance column: Abundance.")
   }
@@ -261,7 +261,7 @@ compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, ot
     to = character(),
     OTU_ID = character(),
     group = character(),
-    distancia_genetica = numeric(),
+    genetic_distance = numeric(),
     x = numeric(),
     y = numeric(),
     xend = numeric(),
@@ -378,7 +378,7 @@ compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, ot
         from_lon = get_attr(from, "lon"),
         to_lat = get_attr(to, "lat"),
         to_lon = get_attr(to, "lon"),
-        distancia_genetica = get_genetic_distance(from, to)
+        genetic_distance = get_genetic_distance(from, to)
       ) %>%
       dplyr::ungroup()
 
@@ -390,7 +390,7 @@ compute_connections_metrics <- function(abundances_grouped, alignment_dnabin, ot
         to = to,
         OTU_ID = otu,
         group = group,
-        distancia_genetica = distancia_genetica,
+        genetic_distance = genetic_distance,
         x = from_lon,
         y = from_lat,
         xend = to_lon,
@@ -919,12 +919,12 @@ process_phylum <- function(
   )
   write.csv(
     connection_outputs$network_edges,
-    file.path(network_dir, "edges_Mi_filo.csv"),
+    file.path(network_dir, "haplotype_edges.csv"),
     row.names = FALSE
   )
   write.csv(
     connection_outputs$network_points,
-    file.path(network_dir, "points_Mi_filo.csv"),
+    file.path(network_dir, "haplotype_points.csv"),
     row.names = FALSE
   )
 

@@ -45,9 +45,9 @@ args <- commandArgs(trailingOnly = TRUE)
 if (has_flag(args, c("-h", "--help"))) {
   cat(paste(
     "Usage: Rscript run_all_haplotypes_clustering.R",
-    "[-i <otus_root>] [-o <output_dir>] [--label LABEL]",
-    "[--metadata <metadata_csv>] [--sigma-grid V1,V2,V3]",
-    "[--k-moran N] [--seed N] [--no-maps]\n"
+    "[-i <otus_root>] [-o <output_dir>]",
+    "--metadata <metadata_csv> [--sigma-grid V1,V2,V3]",
+    "[--k-moran N] [--no-maps]\n"
   ))
   quit(status = 0)
 }
@@ -62,7 +62,7 @@ output_dir <- get_flag_value(
   c("-o", "--output"),
   default = file.path(project_root, "data", "analysis", "haplotype_clustering", "all_haplotypes")
 )
-label <- get_flag_value(args, c("--label"), default = "metazoa")
+label <- "metazoa"
 metadata_file <- get_flag_value(args, c("--metadata"))
 sigma_grid <- get_flag_value(
   args,
@@ -71,19 +71,19 @@ sigma_grid <- get_flag_value(
   convert = parse_numeric_list
 )
 k_moran <- get_flag_value(args, c("--k-moran"), default = 5, convert = as.integer)
-seed <- get_flag_value(args, c("--seed"), default = 42, convert = as.integer)
+seed <- 42
 write_maps <- !has_flag(args, c("--no-maps"))
 
 if (is.na(k_moran) || k_moran < 1) {
   stop("--k-moran must be a positive integer.")
 }
-if (is.na(seed)) {
-  stop("--seed must be an integer.")
+if (is.null(metadata_file)) {
+  stop("--metadata is required for run_all_haplotypes_clustering.R.")
 }
 
 input_root <- normalizePath(input_root, mustWork = TRUE)
 output_dir <- normalizePath(output_dir, mustWork = FALSE)
-metadata_file <- if (!is.null(metadata_file)) normalizePath(metadata_file, mustWork = TRUE) else NULL
+metadata_file <- normalizePath(metadata_file, mustWork = TRUE)
 
 run_all_haplotype_clustering(
   otus_root = input_root,

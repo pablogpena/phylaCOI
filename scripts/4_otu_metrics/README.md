@@ -47,9 +47,9 @@ For each phylum, results are written to `otus/<phylum>/informative_otus_metrics/
 - `otu_log_abundance_map.html`
 - `otu_log_connections_map.html`
 
-For each phylum, haplotype-network tables for phase 2 are written to `otus/<phylum>/haplotype_network/`:
-- `edges_Mi_filo.csv`
-- `points_Mi_filo.csv`
+For each phylum, haplotype-network tables for downstream clustering are written to `otus/<phylum>/haplotype_network/`:
+- `haplotype_edges.csv`
+- `haplotype_points.csv`
 
 Additionally, a combined table across all phyla is written to:
 - `otus/div_abun_conn_master.csv` (includes a `phylum` column)
@@ -70,13 +70,13 @@ otus/
     │   ├── otu_log_abundance_map.html
     │   └── otu_log_connections_map.html
     └── haplotype_network/
-        ├── edges_Mi_filo.csv
-        └── points_Mi_filo.csv
+        ├── haplotype_edges.csv
+        └── haplotype_points.csv
 ```
 
 ## Notes
 - The script prints a simple progress bar while processing phyla.
-- `haplotype_network/` is used by the phase 2 haplotype clustering analyses.
+- `haplotype_network/` is used by the haplotype clustering analyses.
 
 ## Requirements
 - R >= 4.0

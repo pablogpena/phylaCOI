@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Utilities for phase 2 haplotype clustering and current-zone analyses.
+# Utilities for haplotype clustering and current-zone analyses.
 
 suppressPackageStartupMessages({
   library(dplyr)
@@ -11,24 +11,6 @@ suppressPackageStartupMessages({
   library(stringr)
   library(stringi)
 })
-
-# Check optional packages before running optional outputs.
-# Returns TRUE when every package is available.
-ensure_optional_packages <- function(packages, feature_name) {
-  missing_packages <- packages[
-    !vapply(packages, requireNamespace, logical(1), quietly = TRUE)
-  ]
-
-  if (length(missing_packages) > 0) {
-    warning(
-      "Skipping ", feature_name, ". Missing R packages: ",
-      paste(missing_packages, collapse = ", ")
-    )
-    return(FALSE)
-  }
-
-  TRUE
-}
 
 # Normalize locality names for robust metadata joins.
 # Keeps comparisons stable across spaces, accents, and case.
@@ -42,7 +24,7 @@ normalize_locality_key <- function(values) {
 }
 
 # Create a filesystem-safe output label.
-# Used as suffix in phase 2 output filenames.
+# Used as suffix in haplotype clustering output filenames.
 normalize_output_label <- function(label) {
   cleaned_label <- tolower(gsub("[^A-Za-z0-9]+", "_", label))
   cleaned_label <- gsub("^_+|_+$", "", cleaned_label)
@@ -55,7 +37,7 @@ normalize_output_label <- function(label) {
 }
 
 # Load per-phylum haplotype network files from data/otus.
-# Returns one edge table and one point table with a Filo column.
+# Returns one edge table and one point table with a phylum column.
 load_haplotype_network_data <- function(otus_root) {
   phylum_dirs <- list.dirs(otus_root, recursive = FALSE, full.names = TRUE)
 
@@ -65,8 +47,8 @@ load_haplotype_network_data <- function(otus_root) {
   for (phylum_dir in phylum_dirs) {
     phylum_name <- basename(phylum_dir)
     network_dir <- file.path(phylum_dir, "haplotype_network")
-    edges_file <- file.path(network_dir, "edges_Mi_filo.csv")
-    points_file <- file.path(network_dir, "points_Mi_filo.csv")
+    edges_file <- file.path(network_dir, "haplotype_edges.csv")
+    points_file <- file.path(network_dir, "haplotype_points.csv")
 
     if (!file.exists(edges_file) || !file.exists(points_file)) {
       message("Skipping ", phylum_name, ": missing haplotype network files.")
@@ -77,8 +59,8 @@ load_haplotype_network_data <- function(otus_root) {
     edges_df <- read.csv(edges_file, stringsAsFactors = FALSE)
     points_df <- read.csv(points_file, stringsAsFactors = FALSE)
 
-    edges_df$Filo <- phylum_name
-    points_df$Filo <- phylum_name
+    edges_df$phylum <- phylum_name
+    points_df$phylum <- phylum_name
 
     all_edges[[phylum_name]] <- edges_df
     all_points[[phylum_name]] <- points_df
@@ -98,10 +80,10 @@ load_haplotype_network_data <- function(otus_root) {
 # Drops intra-locality edges and cross-OTU edges.
 build_edges_with_info <- function(edges_df_all, points_df_all) {
   required_edges <- c(
-    "from", "to", "OTU_ID", "group", "distancia_genetica",
-    "x", "y", "xend", "yend", "Filo"
+    "from", "to", "OTU_ID", "group", "genetic_distance",
+    "x", "y", "xend", "yend", "phylum"
   )
-  required_points <- c("UniqueID", "Localities", "OTU_ID", "Filo")
+  required_points <- c("UniqueID", "Localities", "OTU_ID", "phylum")
 
   missing_edges <- setdiff(required_edges, names(edges_df_all))
   missing_points <- setdiff(required_points, names(points_df_all))
@@ -115,7 +97,7 @@ build_edges_with_info <- function(edges_df_all, points_df_all) {
 
   points_from <- points_df_all %>%
     dplyr::transmute(
-      Filo = Filo,
+      phylum = phylum,
       from = UniqueID,
       Locality_from = Localities,
       OTU_ID_from = as.character(OTU_ID)
@@ -123,7 +105,7 @@ build_edges_with_info <- function(edges_df_all, points_df_all) {
 
   points_to <- points_df_all %>%
     dplyr::transmute(
-      Filo = Filo,
+      phylum = phylum,
       to = UniqueID,
       Locality_to = Localities,
       OTU_ID_to = as.character(OTU_ID)
@@ -131,8 +113,8 @@ build_edges_with_info <- function(edges_df_all, points_df_all) {
 
   edges_df_all %>%
     dplyr::mutate(OTU_ID = as.character(OTU_ID)) %>%
-    dplyr::left_join(points_from, by = c("Filo", "from")) %>%
-    dplyr::left_join(points_to, by = c("Filo", "to")) %>%
+    dplyr::left_join(points_from, by = c("phylum", "from")) %>%
+    dplyr::left_join(points_to, by = c("phylum", "to")) %>%
     dplyr::filter(
       !is.na(Locality_from),
       !is.na(Locality_to),
@@ -141,8 +123,8 @@ build_edges_with_info <- function(edges_df_all, points_df_all) {
     ) %>%
     dplyr::mutate(
       OTU_ID = OTU_ID_from,
-      Filo_from = Filo,
-      Filo_to = Filo
+      phylum_from = phylum,
+      phylum_to = phylum
     )
 }
 
@@ -170,7 +152,7 @@ collapse_edges_to_localities <- function(edges_with_info) {
     dplyr::filter(Locality_from != Locality_to) %>%
     dplyr::group_by(Locality_from, Locality_to) %>%
     dplyr::summarise(
-      mean_dist = mean(distancia_genetica, na.rm = TRUE),
+      mean_dist = mean(genetic_distance, na.rm = TRUE),
       n_connections = dplyr::n(),
       .groups = "drop"
     )
@@ -467,8 +449,8 @@ run_all_haplotype_partitions <- function(
     )
     tibble::tibble(
       sigma = sigma_value,
-      modularidad = rbf_result_tmp$modularity,
-      n_comun = ifelse(
+      modularity = rbf_result_tmp$modularity,
+      n_communities = ifelse(
         is.null(rbf_result_tmp$cluster),
         NA_integer_,
         length(unique(igraph::membership(rbf_result_tmp$cluster)))
@@ -476,7 +458,7 @@ run_all_haplotype_partitions <- function(
     )
   }))
 
-  best_sigma <- rbf_grid$sigma[which.max(rbf_grid$modularidad)]
+  best_sigma <- rbf_grid$sigma[which.max(rbf_grid$modularity)]
   if (length(best_sigma) == 0 || !is.finite(best_sigma)) {
     best_sigma <- sigma_grid[1]
   }
@@ -510,9 +492,9 @@ run_all_haplotype_partitions <- function(
     )
 
   ari_table <- tibble::tibble(
-    Comparacion = c(
-      "Inv vs Conex", "Inv vs Lineal", "Inv vs RBF",
-      "Conex vs Lineal", "Conex vs RBF", "Lineal vs RBF"
+    comparison = c(
+      "Inverse vs Count", "Inverse vs Linear", "Inverse vs RBF",
+      "Count vs Linear", "Count vs RBF", "Linear vs RBF"
     ),
     ARI = c(
       adjusted_rand_index(comp_all$Cluster_inv, comp_all$Cluster_cnt),
@@ -526,36 +508,36 @@ run_all_haplotype_partitions <- function(
 
   mod_summary <- dplyr::bind_rows(
     tibble::tibble(
-      metodo = "Inverse_1_d",
-      modularidad = inverse_result$modularity,
-      n_comun = ifelse(
+      method = "Inverse_1_d",
+      modularity = inverse_result$modularity,
+      n_communities = ifelse(
         is.null(inverse_result$cluster),
         NA_integer_,
         length(unique(igraph::membership(inverse_result$cluster)))
       )
     ),
     tibble::tibble(
-      metodo = "Conexiones",
-      modularidad = count_result$modularity,
-      n_comun = ifelse(
+      method = "Count",
+      modularity = count_result$modularity,
+      n_communities = ifelse(
         is.null(count_result$cluster),
         NA_integer_,
         length(unique(igraph::membership(count_result$cluster)))
       )
     ),
     tibble::tibble(
-      metodo = "Lineal_1_minus_d_over_max",
-      modularidad = linear_result$modularity,
-      n_comun = ifelse(
+      method = "Linear_1_minus_d_over_max",
+      modularity = linear_result$modularity,
+      n_communities = ifelse(
         is.null(linear_result$cluster),
         NA_integer_,
         length(unique(igraph::membership(linear_result$cluster)))
       )
     ),
     tibble::tibble(
-      metodo = paste0("RBF_sigma_", best_sigma),
-      modularidad = rbf_result$modularity,
-      n_comun = ifelse(
+      method = paste0("RBF_sigma_", best_sigma),
+      modularity = rbf_result$modularity,
+      n_communities = ifelse(
         is.null(rbf_result$cluster),
         NA_integer_,
         length(unique(igraph::membership(rbf_result$cluster)))
@@ -564,8 +546,8 @@ run_all_haplotype_partitions <- function(
   )
 
   mod_results <- tibble::tibble(
-    Metodo = c("Inverse_1_d", "Conexiones", "Lineal", "RBF"),
-    Modularity = c(
+    method = c("Inverse_1_d", "Count", "Linear", "RBF"),
+    modularity = c(
       inverse_result$modularity,
       count_result$modularity,
       linear_result$modularity,
@@ -755,10 +737,6 @@ prepare_base_layers <- function(
   ymax = 44.5,
   crs_planar = 3035
 ) {
-  if (!ensure_optional_packages(c("sf", "rnaturalearth"), "static maps")) {
-    return(NULL)
-  }
-
   old_s2 <- sf::sf_use_s2()
   sf::sf_use_s2(FALSE)
   on.exit(sf::sf_use_s2(old_s2), add = TRUE)
@@ -809,9 +787,6 @@ make_map_for_case <- function(
   pal = NULL,
   voronoi_alpha = 0.25
 ) {
-  if (!ensure_optional_packages(c("sf", "scatterpie"), "static maps")) {
-    return(NULL)
-  }
   if (!all(c("Locality", "lon", "lat", cluster_col) %in% names(comp_all))) {
     return(NULL)
   }
@@ -978,20 +953,13 @@ make_map_for_case <- function(
 }
 
 # Write the four all-haplotype static maps.
-# Skips cleanly when optional map packages are unavailable.
+# Requires sf, scatterpie, and rnaturalearth.
 write_all_haplotype_maps <- function(comp_all, output_dir, label) {
-  if (!ensure_optional_packages(c("sf", "scatterpie", "rnaturalearth"), "static maps")) {
-    return(invisible(NULL))
-  }
-
   figures_dir <- file.path(output_dir, "figures")
   dir.create(figures_dir, showWarnings = FALSE, recursive = TRUE)
 
   palette_all <- make_cluster_palette(comp_all)
   base_layers <- prepare_base_layers()
-  if (is.null(base_layers)) {
-    return(invisible(NULL))
-  }
 
   map_specs <- list(
     inverse = list(
@@ -1017,19 +985,13 @@ write_all_haplotype_maps <- function(comp_all, output_dir, label) {
   )
 
   for (map_spec in map_specs) {
-    map_plot <- tryCatch(
-      make_map_for_case(
-        comp_all,
-        map_spec$col,
-        map_spec$title,
-        base_layers = base_layers,
-        pal = palette_all,
-        voronoi_alpha = 0.25
-      ),
-      error = function(error_condition) {
-        warning("Could not build map ", map_spec$file, ": ", conditionMessage(error_condition))
-        NULL
-      }
+    map_plot <- make_map_for_case(
+      comp_all,
+      map_spec$col,
+      map_spec$title,
+      base_layers = base_layers,
+      pal = palette_all,
+      voronoi_alpha = 0.25
     )
 
     if (!is.null(map_plot)) {
@@ -1087,15 +1049,15 @@ analyze_haplotype_case <- function(
       result_tmp <- cluster_and_coordinates(graph_tmp, edges_sub, "Cluster", seed)
       tibble::tibble(
         sigma = sigma_value,
-        modularidad = result_tmp$modularity,
-        n_comun = ifelse(
+        modularity = result_tmp$modularity,
+        n_communities = ifelse(
           is.null(result_tmp$cluster),
           NA_integer_,
           length(unique(igraph::membership(result_tmp$cluster)))
         )
       )
     }))
-    best_sigma <- rbf_grid$sigma[which.max(rbf_grid$modularidad)]
+    best_sigma <- rbf_grid$sigma[which.max(rbf_grid$modularity)]
     if (length(best_sigma) == 0 || !is.finite(best_sigma)) {
       best_sigma <- sigma_grid[1]
     }
@@ -1168,58 +1130,58 @@ run_same_diff_partitions <- function(
 
   mod_summary <- dplyr::bind_rows(
     tibble::tibble(
-      grupo = "SAME",
-      metodo = "Inverse_1/d",
-      modularidad = same_results$inverse$modularity,
-      n_comun = count_communities(same_results$inverse)
+      group = "same",
+      method = "Inverse_1/d",
+      modularity = same_results$inverse$modularity,
+      n_communities = count_communities(same_results$inverse)
     ),
     tibble::tibble(
-      grupo = "SAME",
-      metodo = "Count",
-      modularidad = same_results$count$modularity,
-      n_comun = count_communities(same_results$count)
+      group = "same",
+      method = "Count",
+      modularity = same_results$count$modularity,
+      n_communities = count_communities(same_results$count)
     ),
     tibble::tibble(
-      grupo = "SAME",
-      metodo = "Linear",
-      modularidad = same_results$linear$modularity,
-      n_comun = count_communities(same_results$linear)
+      group = "same",
+      method = "Linear",
+      modularity = same_results$linear$modularity,
+      n_communities = count_communities(same_results$linear)
     ),
     tibble::tibble(
-      grupo = "SAME",
-      metodo = paste0("RBF (sigma=", sprintf("%.3f", same_results$rbf$sigma), ")"),
-      modularidad = same_results$rbf$modularity,
-      n_comun = count_communities(same_results$rbf)
+      group = "same",
+      method = paste0("RBF (sigma=", sprintf("%.3f", same_results$rbf$sigma), ")"),
+      modularity = same_results$rbf$modularity,
+      n_communities = count_communities(same_results$rbf)
     ),
     tibble::tibble(
-      grupo = "DIFF",
-      metodo = "Inverse_1/d",
-      modularidad = diff_results$inverse$modularity,
-      n_comun = count_communities(diff_results$inverse)
+      group = "diff",
+      method = "Inverse_1/d",
+      modularity = diff_results$inverse$modularity,
+      n_communities = count_communities(diff_results$inverse)
     ),
     tibble::tibble(
-      grupo = "DIFF",
-      metodo = "Count",
-      modularidad = diff_results$count$modularity,
-      n_comun = count_communities(diff_results$count)
+      group = "diff",
+      method = "Count",
+      modularity = diff_results$count$modularity,
+      n_communities = count_communities(diff_results$count)
     ),
     tibble::tibble(
-      grupo = "DIFF",
-      metodo = "Linear",
-      modularidad = diff_results$linear$modularity,
-      n_comun = count_communities(diff_results$linear)
+      group = "diff",
+      method = "Linear",
+      modularity = diff_results$linear$modularity,
+      n_communities = count_communities(diff_results$linear)
     ),
     tibble::tibble(
-      grupo = "DIFF",
-      metodo = paste0("RBF (sigma=", sprintf("%.3f", diff_results$rbf$sigma), ")"),
-      modularidad = diff_results$rbf$modularity,
-      n_comun = count_communities(diff_results$rbf)
+      group = "diff",
+      method = paste0("RBF (sigma=", sprintf("%.3f", diff_results$rbf$sigma), ")"),
+      modularity = diff_results$rbf$modularity,
+      n_communities = count_communities(diff_results$rbf)
     )
   )
 
   ari_same <- tibble::tibble(
-    Comparacion = c(
-      "Inv vs Count", "Inv vs Linear", "Inv vs RBF",
+    comparison = c(
+      "Inverse vs Count", "Inverse vs Linear", "Inverse vs RBF",
       "Count vs Linear", "Count vs RBF", "Linear vs RBF"
     ),
     ARI = c(
@@ -1233,8 +1195,8 @@ run_same_diff_partitions <- function(
   )
 
   ari_diff <- tibble::tibble(
-    Comparacion = c(
-      "Inv vs Count", "Inv vs Linear", "Inv vs RBF",
+    comparison = c(
+      "Inverse vs Count", "Inverse vs Linear", "Inverse vs RBF",
       "Count vs Linear", "Count vs RBF", "Linear vs RBF"
     ),
     ARI = c(
@@ -1248,7 +1210,7 @@ run_same_diff_partitions <- function(
   )
 
   ari_same_vs_diff <- tibble::tibble(
-    Metodo = c("Inverse_1/d", "Count", "Linear", "RBF"),
+    method = c("Inverse_1/d", "Count", "Linear", "RBF"),
     ARI = c(
       pairwise_ari(same_results$inverse$locality_coords, diff_results$inverse$locality_coords),
       pairwise_ari(same_results$count$locality_coords, diff_results$count$locality_coords),
@@ -1267,12 +1229,12 @@ run_same_diff_partitions <- function(
   )
 }
 
-# Compute geographical distance summaries for all/same/diff edges.
+# Compute geographic distance summaries for all/same/diff edges.
 # Returns per-OTU medians, summary stats, and Welch-test inputs.
-compute_geographical_distance_outputs <- function(edges_with_info) {
+compute_geographic_distance_outputs <- function(edges_with_info) {
   empty_result <- list(
-    med_geo_by_otu = tibble::tibble(),
-    resumen_geo_otu = tibble::tibble(),
+    median_distance_by_otu = tibble::tibble(),
+    median_distance_summary = tibble::tibble(),
     dist_long = tibble::tibble(),
     sum_stats = tibble::tibble(),
     stats_summary = tibble::tibble(),
@@ -1294,7 +1256,7 @@ compute_geographical_distance_outputs <- function(edges_with_info) {
     return(empty_result)
   }
 
-  med_geo_by_otu <- edges_base %>%
+  median_distance_by_otu <- edges_base %>%
     dplyr::group_by(OTU_ID) %>%
     dplyr::summarise(
       n_edges = dplyr::n(),
@@ -1314,11 +1276,11 @@ compute_geographical_distance_outputs <- function(edges_with_info) {
       .groups = "drop"
     )
 
-  resumen_geo_otu <- med_geo_by_otu %>%
+  median_distance_summary <- median_distance_by_otu %>%
     dplyr::summarise(
       n_OTUs = dplyr::n(),
-      n_OTUs_con_diff = sum(!is.na(med_km_diff)),
-      n_OTUs_con_same = sum(!is.na(med_km_same)),
+      n_OTUs_with_diff = sum(!is.na(med_km_diff)),
+      n_OTUs_with_same = sum(!is.na(med_km_same)),
       med_of_meds_all_km = median(med_km_all, na.rm = TRUE),
       med_of_meds_diff_km = median(med_km_diff, na.rm = TRUE),
       med_of_meds_same_km = median(med_km_same, na.rm = TRUE)
@@ -1326,14 +1288,14 @@ compute_geographical_distance_outputs <- function(edges_with_info) {
 
   edges_geo <- edges_base %>% dplyr::select(group, geo_dist_km)
   dist_long <- dplyr::bind_rows(
-    edges_geo %>% dplyr::mutate(tipo = "all"),
-    edges_geo %>% dplyr::filter(group == "same") %>% dplyr::mutate(tipo = "same"),
-    edges_geo %>% dplyr::filter(group == "diff") %>% dplyr::mutate(tipo = "diff")
+    edges_geo %>% dplyr::mutate(connection_group = "all"),
+    edges_geo %>% dplyr::filter(group == "same") %>% dplyr::mutate(connection_group = "same"),
+    edges_geo %>% dplyr::filter(group == "diff") %>% dplyr::mutate(connection_group = "diff")
   ) %>%
-    dplyr::mutate(tipo = factor(tipo, levels = c("all", "same", "diff")))
+    dplyr::mutate(connection_group = factor(connection_group, levels = c("all", "same", "diff")))
 
   sum_stats <- dist_long %>%
-    dplyr::group_by(tipo) %>%
+    dplyr::group_by(connection_group) %>%
     dplyr::summarise(
       n = dplyr::n(),
       median_km = median(geo_dist_km, na.rm = TRUE),
@@ -1343,11 +1305,11 @@ compute_geographical_distance_outputs <- function(edges_with_info) {
     )
 
   dist_test <- dist_long %>%
-    dplyr::filter(tipo %in% c("same", "diff")) %>%
+    dplyr::filter(connection_group %in% c("same", "diff")) %>%
     droplevels()
 
   stats_summary <- dist_test %>%
-    dplyr::group_by(tipo) %>%
+    dplyr::group_by(connection_group) %>%
     dplyr::summarise(
       n = dplyr::n(),
       median_km = median(geo_dist_km, na.rm = TRUE),
@@ -1356,15 +1318,15 @@ compute_geographical_distance_outputs <- function(edges_with_info) {
       .groups = "drop"
     )
 
-  group_counts <- table(dist_test$tipo)
+  group_counts <- table(dist_test$connection_group)
   t_test <- NULL
   if (length(group_counts) == 2 && all(group_counts > 1)) {
-    t_test <- stats::t.test(geo_dist_km ~ tipo, data = dist_test, var.equal = FALSE)
+    t_test <- stats::t.test(geo_dist_km ~ connection_group, data = dist_test, var.equal = FALSE)
   }
 
   list(
-    med_geo_by_otu = med_geo_by_otu,
-    resumen_geo_otu = resumen_geo_otu,
+    median_distance_by_otu = median_distance_by_otu,
+    median_distance_summary = median_distance_summary,
     dist_long = dist_long,
     sum_stats = sum_stats,
     stats_summary = stats_summary,
@@ -1372,11 +1334,11 @@ compute_geographical_distance_outputs <- function(edges_with_info) {
   )
 }
 
-# Plot geographical distances for all/same/diff connections.
+# Plot geographic distances for all/same/diff connections.
 # Uses medians, IQR bars, and a Welch-test annotation when possible.
-plot_geographical_distances <- function(geo_outputs, output_file) {
+plot_geographic_distances <- function(geo_outputs, output_file) {
   if (nrow(geo_outputs$dist_long) == 0 || nrow(geo_outputs$sum_stats) == 0) {
-    warning("Skipping geographical distance plot: no distance data.")
+    warning("Skipping geographic distance plot: no distance data.")
     return(invisible(NULL))
   }
 
@@ -1406,7 +1368,7 @@ plot_geographical_distances <- function(geo_outputs, output_file) {
   distance_plot <- ggplot2::ggplot() +
     ggplot2::geom_jitter(
       data = geo_outputs$dist_long,
-      ggplot2::aes(x = tipo, y = geo_dist_km, color = tipo),
+      ggplot2::aes(x = connection_group, y = geo_dist_km, color = connection_group),
       width = 0.15,
       alpha = 0.10,
       size = 1,
@@ -1414,14 +1376,14 @@ plot_geographical_distances <- function(geo_outputs, output_file) {
     ) +
     ggplot2::geom_col(
       data = geo_outputs$sum_stats,
-      ggplot2::aes(x = tipo, y = median_km, fill = tipo),
+      ggplot2::aes(x = connection_group, y = median_km, fill = connection_group),
       width = 0.6,
       alpha = 0.8,
       color = NA
     ) +
     ggplot2::geom_errorbar(
       data = geo_outputs$sum_stats,
-      ggplot2::aes(x = tipo, ymin = q1, ymax = q3),
+      ggplot2::aes(x = connection_group, ymin = q1, ymax = q3),
       width = 0.16,
       linewidth = 0.7
     ) +
@@ -1429,10 +1391,10 @@ plot_geographical_distances <- function(geo_outputs, output_file) {
     ggplot2::scale_fill_manual(values = palette_values, guide = "none") +
     ggplot2::scale_color_manual(values = palette_values, guide = "none") +
     ggplot2::labs(
-      title = "Geographical distances of connections",
+      title = "Geographic distances of connections",
       subtitle = "Bars = median; lines = IQR (Q1-Q3); points = all connections",
       x = "Connection set",
-      y = "Geographical distance (km)"
+      y = "Geographic distance (km)"
     ) +
     ggplot2::expand_limits(y = y_label * 1.05) +
     ggplot2::theme_minimal(base_size = 12) +
@@ -1580,7 +1542,7 @@ plot_current_zone_summary <- function(zone_dirs, output_file) {
 }
 
 # Run the complete all-haplotype clustering workflow.
-# Writes all legacy summary tables plus optional maps.
+# Writes all summary tables and, when enabled, static maps.
 run_all_haplotype_clustering <- function(
   otus_root,
   output_dir,
@@ -1658,22 +1620,22 @@ run_all_haplotype_clustering <- function(
   if (!is.null(ocean_df)) {
     write.csv(
       ocean_share_by_cluster(clustering_outputs$results$inverse$coords, "Cluster_inv", ocean_df),
-      file.path(output_dir, paste0("tabla_coords_inverse_", label, ".csv")),
+      file.path(output_dir, paste0("ocean_coordinates_inverse_", label, ".csv")),
       row.names = FALSE
     )
     write.csv(
       ocean_share_by_cluster(clustering_outputs$results$count$coords, "Cluster_cnt", ocean_df),
-      file.path(output_dir, paste0("tabla_coords_count_", label, ".csv")),
+      file.path(output_dir, paste0("ocean_coordinates_count_", label, ".csv")),
       row.names = FALSE
     )
     write.csv(
       ocean_share_by_cluster(clustering_outputs$results$linear$coords, "Cluster_linear", ocean_df),
-      file.path(output_dir, paste0("tabla_coords_linear_", label, ".csv")),
+      file.path(output_dir, paste0("ocean_coordinates_linear_", label, ".csv")),
       row.names = FALSE
     )
     write.csv(
       ocean_share_by_cluster(clustering_outputs$results$rbf$coords, "Cluster_rbf", ocean_df),
-      file.path(output_dir, paste0("tabla_coords_rbf_", label, ".csv")),
+      file.path(output_dir, paste0("ocean_coordinates_rbf_", label, ".csv")),
       row.names = FALSE
     )
   }
@@ -1726,8 +1688,7 @@ run_same_diff_current_analysis <- function(
   metadata_file = NULL,
   sigma_grid = c(0.005, 0.010, 0.015),
   k_moran = 5,
-  seed = 42,
-  write_current_figure = TRUE
+  seed = 42
 ) {
   label <- normalize_output_label(label)
   dir.create(output_dir, showWarnings = FALSE, recursive = TRUE)
@@ -1823,37 +1784,35 @@ run_same_diff_current_analysis <- function(
     }
   }
 
-  geo_outputs <- compute_geographical_distance_outputs(edges_with_info)
+  geo_outputs <- compute_geographic_distance_outputs(edges_with_info)
   write.csv(
-    geo_outputs$med_geo_by_otu,
-    file.path(output_dir, paste0("medianas_geo_por_OTU_", label, ".csv")),
+    geo_outputs$median_distance_by_otu,
+    file.path(output_dir, paste0("geographic_distance_medians_by_OTU_", label, ".csv")),
     row.names = FALSE
   )
   write.csv(
-    geo_outputs$resumen_geo_otu,
-    file.path(output_dir, paste0("resumen_medianas_geo_por_OTU_", label, ".csv")),
+    geo_outputs$median_distance_summary,
+    file.path(output_dir, paste0("geographic_distance_median_summary_by_OTU_", label, ".csv")),
     row.names = FALSE
   )
   write.csv(
     geo_outputs$stats_summary,
-    file.path(output_dir, "estadisticos_dist_geograficas.csv"),
+    file.path(output_dir, "geographic_distance_statistics.csv"),
     row.names = FALSE
   )
-  plot_geographical_distances(
+  plot_geographic_distances(
     geo_outputs,
     file.path(output_dir, paste0("p_dist_", label, ".pdf"))
   )
 
-  if (write_current_figure) {
-    zone_dirs <- output_dir
-    if (!is.null(all_output_dir)) {
-      zone_dirs <- c(zone_dirs, all_output_dir)
-    }
-    plot_current_zone_summary(
-      zone_dirs,
-      file.path(output_dir, "Figure_currents_all_methods_ALL_same_diff_ALLgroups.png")
-    )
+  zone_dirs <- output_dir
+  if (!is.null(all_output_dir)) {
+    zone_dirs <- c(zone_dirs, all_output_dir)
   }
+  plot_current_zone_summary(
+    zone_dirs,
+    file.path(output_dir, "Figure_currents_all_methods_ALL_same_diff_ALLgroups.png")
+  )
 
   message("SAME vs DIFF current-analysis outputs written to: ", output_dir)
   invisible(list(edges_with_info = edges_with_info, same_diff_outputs = same_diff_outputs))

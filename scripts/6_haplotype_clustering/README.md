@@ -37,7 +37,7 @@ The ocean metadata file must be semicolon-separated and contain:
 | `id_sample` | Locality or sample identifier matching the network tables. |
 | `Oceans` | Ocean category assigned to each locality. |
 
-In the standard project layout, this file is expected in `data/raw/metadata_eKOI_ver2.csv`.
+In the standard project layout, this file is expected in `data/raw/ocean_metadata.csv`.
 It is required by `run_all_haplotypes_clustering.R` and optional for `run_same_vs_diff_currents.R`.
 
 ## Usage
@@ -47,7 +47,7 @@ It is required by `run_all_haplotypes_clustering.R` and optional for `run_same_v
 Rscript scripts/6_haplotype_clustering/run_all_haplotypes_clustering.R \
   -i data/otus \
   -o data/analysis/haplotype_clustering/all_haplotypes \
-  --metadata data/raw/metadata_eKOI_ver2.csv
+  --metadata data/raw/ocean_metadata.csv
 ```
 
 #### Arguments
@@ -110,7 +110,7 @@ Rscript scripts/6_haplotype_clustering/run_same_vs_diff_currents.R \
   -i data/otus \
   -o data/analysis/haplotype_clustering/same_vs_diff_currents \
   --all-output data/analysis/haplotype_clustering/all_haplotypes \
-  --metadata data/raw/metadata_eKOI_ver2.csv
+  --metadata data/raw/ocean_metadata.csv
 ```
 
 #### Arguments

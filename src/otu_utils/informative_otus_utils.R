@@ -99,3 +99,5 @@ process_phylum <- function(phylum_name, abundance_root, otus_root) {
   writeLines(otus_keep, otus_keep_file)
   
   message("Informative OTUs saved to: ", otus_keep_file)
+  invisible(otus_keep)
+}

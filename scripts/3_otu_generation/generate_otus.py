@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parents[2]
+PROJECT_ROOT = SCRIPT_DIR.parents[1]
 sys.path.append(str(PROJECT_ROOT))
 
 from src.otu_utils.otu_processing import process_phylum

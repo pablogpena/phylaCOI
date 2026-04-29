@@ -28,6 +28,9 @@ process_phylum <- function(phylum_name, abundance_root, otus_root) {
   # Load data
   abundances <- read.csv(abundances_file)
   otus_map   <- read.table(otus_file, col.names = c("OTU", "UniqueID"))
+  otus_map$OTU <- as.character(otus_map$OTU)
+  otus_map$UniqueID <- as.character(otus_map$UniqueID)
+  abundances$UniqueID <- as.character(abundances$UniqueID)
   abundances$OTU <- otus_map$OTU[match(abundances$UniqueID, otus_map$UniqueID)]
   
   alignment <- readDNAStringSet(aligned_fasta_file)

@@ -74,7 +74,7 @@ By default, the workflow expects:
 | `max_parallel_phyla` | `2` | Maximum number of phyla processed at the same time. Increase only if the machine has enough CPU and memory. |
 | `max_otu_seqs` | `500` | Maximum number of sequences per OTU used when building haplotype networks. |
 | `cluster_radius_km` | `5` | Geographic radius used to group nearby points into local clusters. |
-| `write_maps` | `true` | Write HTML maps during OTU metrics. |
+| `write_maps` | `true` | Write map outputs during OTU metrics and all-haplotype clustering. |
 
 ## Basic Run
 

@@ -310,6 +310,22 @@ fit_models_for_metric <- function(data, response_col, metric_label) {
 # Reshape prediction outputs into a long format for plotting.
 # Adds a unified distance column per metric.
 build_predictions_long <- function(predictions) {
+  if (nrow(predictions) == 0) {
+    return(tibble::tibble(
+      phylum = character(),
+      metric = character(),
+      model = character(),
+      predicted = numeric(),
+      distance = numeric()
+    ))
+  }
+
+  for (distance_col in c("distance_km_diversity", "distance_km_abundance", "distance_km_connections")) {
+    if (!distance_col %in% names(predictions)) {
+      predictions[[distance_col]] <- NA_real_
+    }
+  }
+
   predictions %>%
     tidyr::pivot_longer(
       cols = c("linear", "nls", "gam", "power", "gompertz"),

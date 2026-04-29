@@ -10,3 +10,4 @@ vsearch_identity: 0.84
 otu_identity: 0.97
 run_mafft: 1
 min_otus: 10
+write_maps: true

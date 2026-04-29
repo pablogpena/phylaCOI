@@ -21,6 +21,7 @@ import subprocess
 import argparse
 import pandas as pd
 from pathlib import Path
+from Bio import SeqIO
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -107,13 +108,11 @@ if __name__ == "__main__":
             fasta_out = phylum_folder / f"{group_name}_{fasta_file.stem}.fasta"
             seq_names = set(group_df["Query"].tolist())
 
-            with open(fasta_file, "r") as original, open(fasta_out, "w") as out:
-                for line in original:
-                    if line.startswith(">"):
-                        name = line.strip()[1:]
-                        if name in seq_names:
-                            out.write(line)
-                            out.write(next(original))
+            records = (
+                record for record in SeqIO.parse(str(fasta_file), "fasta")
+                if record.id in seq_names
+            )
+            SeqIO.write(records, str(fasta_out), "fasta")
 
         df_filtered.to_excel(xlsx_filtered, index=False)
 

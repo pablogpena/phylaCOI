@@ -5,17 +5,6 @@ nextflow.enable.dsl = 2
  * This workflow orchestrates the existing scripts without changing them.
  */
 
-params.raw_fasta = params.raw_fasta ?: 'data/raw/eKOI_metabarcoding.fasta'
-params.reference_db = params.reference_db ?: 'data/raw/eKOI_database.fasta'
-params.sample_metadata = params.sample_metadata ?: 'data/raw/KOI_metadata.csv'
-params.ocean_metadata = params.ocean_metadata ?: 'data/raw/ocean_metadata.csv'
-params.output_root = params.output_root ?: 'data'
-
-params.vsearch_identity = params.vsearch_identity ?: 0.84
-params.otu_identity = params.otu_identity ?: 0.97
-params.run_mafft = params.run_mafft ?: 1
-params.min_otus = params.min_otus ?: 10
-
 repo_dir = file(params.repo_dir ?: workflow.launchDir).toRealPath()
 output_root = file(params.output_root)
 
@@ -59,6 +48,10 @@ process VSEARCH_TAXONOMY {
       -d ${reference_db} \
       -i ${params.vsearch_identity} \
       -f . \
+      -o vsearch_nested
+
+    python ${repo_dir}/workflows/nextflow/src/flatten_vsearch_results.py \
+      -i vsearch_nested \
       -o vsearch_results
     """
 }
@@ -142,12 +135,14 @@ process OTU_METRICS {
     path 'otus', emit: otus
 
     script:
+    def map_flag = params.write_maps ? '' : '--no-maps'
     """
     cp -Lr otus_input otus
 
     Rscript ${repo_dir}/scripts/4_otu_metrics/get_div_abun_conn.R \
       -a ${abundance} \
-      -o otus
+      -o otus \
+      ${map_flag}
     """
 }
 
@@ -184,11 +179,13 @@ process HAPLOTYPE_CLUSTERING_ALL {
     path 'all_haplotypes', emit: all_haplotypes
 
     script:
+    def map_flag = params.write_maps ? '' : '--no-maps'
     """
     Rscript ${repo_dir}/scripts/6_haplotype_clustering/run_all_haplotypes_clustering.R \
       -i ${otus} \
       -o all_haplotypes \
-      --metadata ${ocean_metadata}
+      --metadata ${ocean_metadata} \
+      ${map_flag}
     """
 }
 

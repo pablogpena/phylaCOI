@@ -2,13 +2,14 @@
 
 This folder contains a Nextflow workflow for running the complete `phylaCOI` pipeline from the repository root.
 
-The workflow uses the same input files, scripts, and output structure described in the main repository README. It is designed for local execution on standard workstations or small compute servers. After taxonomic assignment, the data are organized into one folder per phylum, and the downstream scripts process those phylum folders step by step.
+The workflow uses the same input files, scripts, and output structure described in the main repository [documentation](../../README.md). It is designed for local execution on standard computers. After taxonomic assignment, the data are organized into one folder per phylum, and the downstream scripts process those phylum folders to get the final results.
 
 ## Files
 
 | File | Description |
 |------|-------------|
 | `main.nf` | Main Nextflow workflow. It defines the ordered processes and the files passed between them. |
+| `src/` | Small workflow helper scripts used only by this Nextflow wrapper. |
 | `nextflow.config` | Default parameters and local execution settings. |
 | `params.yaml` | Example parameter file that can be copied or edited for custom runs. |
 | `environment.yml` | Micromamba/conda environment with Nextflow and the Python, R, VSEARCH, and MAFFT dependencies required by the pipeline. |
@@ -28,10 +29,22 @@ Install the environment from the repository root:
 micromamba env create -f workflows/nextflow/environment.yml
 ```
 
+Alternatively, create the same environment with conda:
+
+```bash
+conda env create -f workflows/nextflow/environment.yml
+```
+
 Activate it before running the workflow:
 
 ```bash
 micromamba activate phylaCOI
+```
+
+With conda, use:
+
+```bash
+conda activate phylaCOI
 ```
 
 Check that the main tools are available:
@@ -42,12 +55,6 @@ vsearch --version
 mafft --version
 Rscript --version
 python --version
-```
-
-If the environment already exists and needs to be updated:
-
-```bash
-micromamba env update -n phylaCOI -f workflows/nextflow/environment.yml
 ```
 
 ## Required Input Files
@@ -70,20 +77,21 @@ The workflow also exposes these analysis parameters:
 | `otu_identity` | `0.97` | Sequence identity threshold used for OTU clustering. |
 | `run_mafft` | `1` | Whether to run MAFFT during abundance estimation (`1`) or skip alignment (`0`). |
 | `min_otus` | `10` | Minimum number of OTUs required for a phylum to be included in the metrics analysis. |
+| `write_maps` | `true` | Whether to generate map outputs in the OTU metrics and all-haplotype clustering steps. |
 
 ## Workflow Structure
 
-![phylaCOI Nextflow workflow](assets/phylaCOI_nextflow_workflow.svg)
+<img src="./assets/PhylcaCOI_NextFlow.svg" alt="phylaCOI Nextflow workflow" width="100%">
 
 ## Phylum-Level Organization
 
 The pipeline is organized around phylum folders after the taxonomic assignment step. `VSEARCH_TAXONOMY` creates the initial phylum-specific FASTA folders, and the following steps read and write matching phylum folders in `data/abundance/` and `data/otus/`.
 
-This organization keeps intermediate files separated by taxonomic group and is practical for local computers: each stage writes results to disk before the next stage starts, so failed steps can be inspected and repeated without manually rebuilding the entire analysis.
+This organization keeps intermediate files separated by taxonomic group and is a practical solution: each stage writes results to disk before the next stage starts, so failed steps can be inspected and repeated without manually rebuilding the entire analysis.
 
 ## Workflow Components
 
-### `RAW_PREPROCESS`
+### `Raw preprocessing`
 
 Calls:
 
@@ -97,14 +105,16 @@ Purpose:
 - Writes the original sequence headers to `seq_headers.txt`.
 - Writes a cleaned FASTA file with simplified identifiers.
 
-Published outputs:
+Outputs:
 
 | Output | Location |
 |--------|----------|
 | `seq_headers.txt` | `data/raw/seq_headers.txt` |
 | `eKOI_metabarcoding_cleaned.fasta` | `data/procesed/eKOI_metabarcoding_cleaned.fasta` |
 
-### `VSEARCH_TAXONOMY`
+For more information, see [Raw preprocessing](../../scripts/1_raw_data_processing/readme.md).
+
+### `VSEARCH taxonomy assignment`
 
 Calls:
 
@@ -117,14 +127,17 @@ Purpose:
 - Runs VSEARCH against the reference database.
 - Filters taxonomic hits using `vsearch_identity`.
 - Splits the cleaned sequences into one folder per phylum.
+- Flattens the VSEARCH output so downstream steps read `data/vsearch_results/<phylum>/`.
 
-Published output:
+Output:
 
 | Output | Location |
 |--------|----------|
 | VSEARCH results and phylum FASTA folders | `data/vsearch_results/` |
 
-### `ABUNDANCE_ESTIMATION`
+For more information, see [VSEARCH taxonomy assignment](../../scripts/1_raw_data_processing/readme.md).
+
+### `Abundance estimation`
 
 Calls:
 
@@ -140,7 +153,7 @@ Purpose:
 - Writes one unique-sequence FASTA per phylum.
 - Runs MAFFT when `run_mafft = 1`.
 
-Published output:
+Output:
 
 | Output | Location |
 |--------|----------|
@@ -160,7 +173,9 @@ data/abundance/
     └── aligned_sequences_mafft.fasta
 ```
 
-### `OTU_GENERATION`
+For more information, see [Abundance estimation](../../scripts/2_abundance_estimation/readme.md).
+
+### `OTUs generation`
 
 Calls:
 
@@ -175,7 +190,7 @@ Purpose:
 - Runs VSEARCH clustering using `otu_identity`.
 - Writes OTU FASTA, `.uc`, and mapping files per phylum.
 
-Published output:
+Output:
 
 | Output | Location |
 |--------|----------|
@@ -197,7 +212,9 @@ data/otus/
     └── otus_mapping.txt
 ```
 
-### `INFORMATIVE_OTUS`
+For more information, see [OTUs generation](../../scripts/3_otu_generation/README.md).
+
+### `Informative OTUs selection`
 
 Calls:
 
@@ -212,13 +229,15 @@ Purpose:
 - Keeps OTUs with enough sequence and spatial variation for downstream analyses.
 - Writes the informative OTU list inside each phylum folder.
 
-Published output:
+Output:
 
 | Output | Location |
 |--------|----------|
 | `informative_OTUs.txt` per phylum | `data/otus/<phylum>/informative_OTUs.txt` |
 
-### `OTU_METRICS`
+For more information, see [Informative OTUs selection](../../scripts/3_otu_generation/README.md).
+
+### `Get OTUs metrics`
 
 Calls:
 
@@ -234,7 +253,7 @@ Purpose:
 - Writes haplotype-network input tables used by the clustering workflow.
 - Builds a global metrics table across all processed phyla.
 
-Published outputs:
+Outputs:
 
 | Output | Location |
 |--------|----------|
@@ -242,7 +261,9 @@ Published outputs:
 | Haplotype-network edge and point tables | `data/otus/<phylum>/haplotype_network/` |
 | Global metrics table | `data/otus/div_abun_conn_master.csv` |
 
-### `METRICS_ANALYSIS`
+For more information, see [Get OTUs metrics](../../scripts/4_otu_metrics/README.md).
+
+### `Metrics analysis`
 
 Calls:
 
@@ -257,13 +278,15 @@ Purpose:
 - Fits distance-decay models for abundance, diversity, and connections.
 - Computes correlations, model summaries, predictions, and figures.
 
-Published output:
+Output:
 
 | Output | Location |
 |--------|----------|
 | Metrics analysis tables and figures | `data/analysis/otu_metrics_summary/` |
 
-### `HAPLOTYPE_CLUSTERING_ALL`
+For more information, see [Metrics analysis](../../scripts/5_metrics_analysis/README.md).
+
+### `All-haplotype clustering`
 
 Calls:
 
@@ -279,13 +302,15 @@ Purpose:
 - Joins the clustering results with ocean/current metadata.
 - Writes clustering tables, summaries, and maps.
 
-Published output:
+Output:
 
 | Output | Location |
 |--------|----------|
 | All-haplotype clustering outputs | `data/analysis/haplotype_clustering/all_haplotypes/` |
 
-### `HAPLOTYPE_CLUSTERING_SAME_DIFF`
+For more information, see [All-haplotype clustering](../../scripts/6_haplotype_clustering/README.md).
+
+### `Same vs different haplotypes current`
 
 Calls:
 
@@ -300,11 +325,13 @@ Purpose:
 - Compares networks built from same-haplotype and different-haplotype connections.
 - Summarizes how inferred clusters relate to ocean/current categories.
 
-Published output:
+Output:
 
 | Output | Location |
 |--------|----------|
 | Same-vs-different haplotype current analysis | `data/analysis/haplotype_clustering/same_vs_diff_currents/` |
+
+For more information, see [Same vs different haplotypes current](../../scripts/6_haplotype_clustering/README.md).
 
 ## Basic Run
 
@@ -386,15 +413,6 @@ data/
 
 ## Troubleshooting
 
-Check the environment:
-
-```bash
-micromamba activate phylaCOI
-nextflow -version
-Rscript -e "library(Biostrings); library(sf); library(spdep); library(scatterpie)"
-python -c "import pandas, Bio, openpyxl"
-```
-
 Inspect a failed process:
 
 ```bash
@@ -402,10 +420,3 @@ nextflow log
 ```
 
 Then open the corresponding `.command.log`, `.command.err`, and `.command.sh` files inside the relevant `work/` subfolder.
-
-Common checks before running:
-
-- The four required input files exist under `data/raw/` or are provided through custom parameters.
-- `vsearch`, `mafft`, `Rscript`, `python`, and `nextflow` are available in the active environment.
-- The workflow is launched from the repository root.
-- The output folders under `data/` are writable.

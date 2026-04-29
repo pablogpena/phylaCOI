@@ -808,6 +808,9 @@ process_phylum <- function(
     col.names = c("OTU", "UniqueID"),
     stringsAsFactors = FALSE
   )
+  otu_map$OTU <- as.character(otu_map$OTU)
+  otu_map$UniqueID <- as.character(otu_map$UniqueID)
+  abundances$UniqueID <- as.character(abundances$UniqueID)
   informative_otus <- scan(input_files$informative_otus_file, what = character(), quiet = TRUE)
 
   if (length(informative_otus) == 0) {
@@ -848,8 +851,9 @@ process_phylum <- function(
 
   abundances_grouped <- abundances_filtered %>%
     dplyr::group_by(OTU) %>%
-    dplyr::group_modify(~ cluster_points_by_distance(.x, cluster_radius_m)) %>%
-    dplyr::ungroup()
+    dplyr::group_split(.keep = TRUE) %>%
+    lapply(cluster_points_by_distance, threshold_m = cluster_radius_m) %>%
+    dplyr::bind_rows()
 
   abundance_outputs <- compute_abundance_metrics(abundances_grouped)
   connection_outputs <- compute_connections_metrics(
@@ -864,7 +868,8 @@ process_phylum <- function(
   )
 
   diversity_for_merge <- diversity_outputs$diversity_distances %>%
-    dplyr::rename(distance_km_diversity = distance_km)
+    dplyr::rename(distance_km_diversity = distance_km) %>%
+    dplyr::select(-n_connections)
   abundance_for_merge <- abundance_outputs$abundance_distances %>%
     dplyr::rename(distance_km_abundance = distance_km)
 

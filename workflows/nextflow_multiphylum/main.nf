@@ -5,21 +5,6 @@ nextflow.enable.dsl = 2
  * Per-phylum tasks are launched after VSEARCH taxonomy assignment.
  */
 
-params.raw_fasta = params.raw_fasta ?: 'data/raw/eKOI_metabarcoding.fasta'
-params.reference_db = params.reference_db ?: 'data/raw/eKOI_database.fasta'
-params.sample_metadata = params.sample_metadata ?: 'data/raw/KOI_metadata.csv'
-params.ocean_metadata = params.ocean_metadata ?: 'data/raw/ocean_metadata.csv'
-params.output_root = params.output_root ?: 'data'
-
-params.vsearch_identity = params.vsearch_identity ?: 0.84
-params.otu_identity = params.otu_identity ?: 0.97
-params.run_mafft = params.run_mafft ?: 1
-params.min_otus = params.min_otus ?: 10
-params.max_parallel_phyla = params.max_parallel_phyla ?: 2
-params.max_otu_seqs = params.max_otu_seqs ?: 500
-params.cluster_radius_km = params.cluster_radius_km ?: 5
-params.write_maps = params.write_maps ?: true
-
 repo_dir = file(params.repo_dir ?: workflow.launchDir).toRealPath()
 output_root = file(params.output_root)
 
@@ -78,16 +63,16 @@ process ABUNDANCE_ONE {
     publishDir "${output_root}/abundance", mode: 'copy', overwrite: true
 
     input:
-    tuple val(phylum), path(phylum_dir), path(seq_headers), path(sample_metadata)
+    tuple val(phylum), path(phylum_dir, stageAs: 'phylum_input'), path(seq_headers), path(sample_metadata)
 
     output:
-    tuple val(phylum), path("abundance_out/${phylum}"), emit: abundance_dir
+    tuple val(phylum), path("${phylum}"), emit: abundance_dir
 
     script:
     """
     python ${repo_dir}/workflows/nextflow_multiphylum/src/run_abundance_one_phylum.py \
-      --phylum-dir ${phylum_dir} \
-      --output-dir abundance_out/${phylum} \
+      --phylum-dir phylum_input \
+      --output-dir ${phylum} \
       --names ${seq_headers} \
       --metadata ${sample_metadata} \
       --mafft ${params.run_mafft} \
@@ -102,16 +87,16 @@ process OTU_GENERATION_ONE {
     publishDir "${output_root}/otus", mode: 'copy', overwrite: true
 
     input:
-    tuple val(phylum), path(abundance_dir)
+    tuple val(phylum), path(abundance_dir, stageAs: 'abundance_input')
 
     output:
-    tuple val(phylum), path("otus_out/${phylum}"), emit: otus_dir
+    tuple val(phylum), path("${phylum}"), emit: otus_dir
 
     script:
     """
     python ${repo_dir}/workflows/nextflow_multiphylum/src/run_otu_generation_one_phylum.py \
-      --abundance-dir ${abundance_dir} \
-      --output-dir otus_out/${phylum} \
+      --abundance-dir abundance_input \
+      --output-dir ${phylum} \
       --identity ${params.otu_identity} \
       --repo-dir ${repo_dir}
     """
@@ -127,11 +112,11 @@ process INFORMATIVE_OTUS_ONE {
     tuple val(phylum), path(abundance_dir, stageAs: 'abundance_input'), path(otus_dir, stageAs: 'otus_input')
 
     output:
-    tuple val(phylum), path("otus_out/${phylum}"), emit: otus_dir
+    tuple val(phylum), path("${phylum}"), emit: otus_dir
 
     script:
     """
-    mkdir -p abundance_root otus_root otus_out
+    mkdir -p abundance_root otus_root
     cp -Lr abundance_input abundance_root/${phylum}
     cp -Lr otus_input otus_root/${phylum}
 
@@ -140,7 +125,7 @@ process INFORMATIVE_OTUS_ONE {
       --abundance-root abundance_root \
       --otus-root otus_root
 
-    cp -Lr otus_root/${phylum} otus_out/${phylum}
+    cp -Lr otus_root/${phylum} ${phylum}
     """
 }
 
@@ -154,12 +139,12 @@ process OTU_METRICS_ONE {
     tuple val(phylum), path(abundance_dir, stageAs: 'abundance_input'), path(otus_dir, stageAs: 'otus_input')
 
     output:
-    tuple val(phylum), path("otus_out/${phylum}"), emit: otus_dir
+    tuple val(phylum), path("${phylum}"), emit: otus_dir
 
     script:
     def map_flag = params.write_maps ? '' : '--no-maps'
     """
-    mkdir -p abundance_root otus_root otus_out
+    mkdir -p abundance_root otus_root
     cp -Lr abundance_input abundance_root/${phylum}
     cp -Lr otus_input otus_root/${phylum}
 
@@ -171,7 +156,7 @@ process OTU_METRICS_ONE {
       --cluster-radius-km ${params.cluster_radius_km} \
       ${map_flag}
 
-    cp -Lr otus_root/${phylum} otus_out/${phylum}
+    cp -Lr otus_root/${phylum} ${phylum}
     """
 }
 
@@ -229,11 +214,13 @@ process HAPLOTYPE_CLUSTERING_ALL {
     path 'all_haplotypes', emit: all_haplotypes
 
     script:
+    def map_flag = params.write_maps ? '' : '--no-maps'
     """
     Rscript ${repo_dir}/scripts/6_haplotype_clustering/run_all_haplotypes_clustering.R \
       -i ${otus} \
       -o all_haplotypes \
-      --metadata ${ocean_metadata}
+      --metadata ${ocean_metadata} \
+      ${map_flag}
     """
 }
 

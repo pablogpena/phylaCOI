@@ -34,9 +34,16 @@ Thumbs.db
 # Logs / temp
 # ============================
 *.log
+.nextflow.log*
 *.tmp
 *.swp
 *.bak
+
+# ============================
+# Nextflow
+# ============================
+.nextflow/
+work/
 
 # ============================
 # Legacy code

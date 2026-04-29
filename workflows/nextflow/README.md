@@ -73,31 +73,7 @@ The workflow also exposes these analysis parameters:
 
 ## Workflow Structure
 
-```text
-RAW_PREPROCESS
-        |
-        v
-VSEARCH_TAXONOMY
-        |
-        v
-ABUNDANCE_ESTIMATION
-        |
-        v
-OTU_GENERATION
-        |
-        v
-INFORMATIVE_OTUS
-        |
-        v
-OTU_METRICS
-        |
-        +--> METRICS_ANALYSIS
-        |
-        +--> HAPLOTYPE_CLUSTERING_ALL
-                       |
-                       v
-             HAPLOTYPE_CLUSTERING_SAME_DIFF
-```
+![phylaCOI Nextflow workflow](assets/phylaCOI_nextflow_workflow.svg)
 
 ## Phylum-Level Organization
 

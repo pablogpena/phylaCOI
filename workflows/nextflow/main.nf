@@ -5,7 +5,6 @@ nextflow.enable.dsl = 2
  * This workflow orchestrates the existing scripts without changing them.
  */
 
-params.repo_dir = params.repo_dir ?: workflow.launchDir
 params.raw_fasta = params.raw_fasta ?: 'data/raw/eKOI_metabarcoding.fasta'
 params.reference_db = params.reference_db ?: 'data/raw/eKOI_database.fasta'
 params.sample_metadata = params.sample_metadata ?: 'data/raw/KOI_metadata.csv'
@@ -17,7 +16,7 @@ params.otu_identity = params.otu_identity ?: 0.97
 params.run_mafft = params.run_mafft ?: 1
 params.min_otus = params.min_otus ?: 10
 
-repo_dir = file(params.repo_dir).toRealPath()
+repo_dir = file(params.repo_dir ?: workflow.launchDir).toRealPath()
 output_root = file(params.output_root)
 
 process RAW_PREPROCESS {

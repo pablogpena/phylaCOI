@@ -1,0 +1,41 @@
+name: phylaCOI
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.11
+  - pandas
+  - biopython
+  - openpyxl
+  - nextflow
+  - openjdk=17
+  - vsearch
+  - mafft
+  - r-base
+  - r-dplyr
+  - r-tidyr
+  - r-readr
+  - r-tibble
+  - r-ggplot2
+  - r-geosphere
+  - r-ape
+  - r-pegas
+  - r-leaflet
+  - r-scales
+  - r-htmlwidgets
+  - r-mgcv
+  - r-vegan
+  - r-purrr
+  - r-igraph
+  - r-ggraph
+  - r-rcolorbrewer
+  - r-pheatmap
+  - r-spdep
+  - r-stringr
+  - r-stringi
+  - r-sf
+  - r-scatterpie
+  - r-rnaturalearth
+  - r-rnaturalearthdata
+  - r-viridislite
+  - bioconductor-biostrings

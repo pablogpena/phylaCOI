@@ -1,0 +1,164 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="900" viewBox="0 0 1280 900" role="img" aria-labelledby="title desc">
+  <title id="title">phylaCOI Nextflow workflow</title>
+  <desc id="desc">Workflow diagram showing inputs, sequence preprocessing, per-phylum processing, OTU metrics, and downstream analyses.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/>
+    </marker>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#0f172a" flood-opacity="0.12"/>
+    </filter>
+    <style>
+      .bg { fill: #ffffff; }
+      .title { font: 700 30px Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 15px Arial, sans-serif; fill: #475569; }
+      .lane { fill: #f8fafc; stroke: #e2e8f0; stroke-width: 1.5; }
+      .lane-title { font: 700 15px Arial, sans-serif; fill: #334155; letter-spacing: 0; }
+      .node-title { font: 700 14px Arial, sans-serif; fill: #0f172a; letter-spacing: 0; }
+      .node-text { font: 400 12.5px Arial, sans-serif; fill: #334155; letter-spacing: 0; }
+      .small { font: 400 12px Arial, sans-serif; fill: #475569; letter-spacing: 0; }
+      .input { fill: #eef6ff; stroke: #2b6cb0; stroke-width: 1.8; }
+      .process { fill: #ffffff; stroke: #64748b; stroke-width: 1.6; }
+      .metrics { fill: #ecfeff; stroke: #0e7490; stroke-width: 2.2; }
+      .analysis { fill: #fff7ed; stroke: #c2410c; stroke-width: 1.8; }
+      .output { fill: #f0fdf4; stroke: #15803d; stroke-width: 1.7; }
+      .arrow { fill: none; stroke: #334155; stroke-width: 2.1; marker-end: url(#arrow); }
+      .arrow-light { fill: none; stroke: #64748b; stroke-width: 1.8; marker-end: url(#arrow); }
+      .label { font: 700 11.5px Arial, sans-serif; fill: #475569; letter-spacing: 0; }
+    </style>
+  </defs>
+
+  <rect class="bg" width="1280" height="900"/>
+
+  <text x="48" y="52" class="title">phylaCOI Nextflow workflow</text>
+  <text x="48" y="78" class="subtitle">From raw COI metabarcoding files to OTU metrics, haplotype networks, and downstream analyses.</text>
+
+  <g transform="translate(930 35)">
+    <rect x="0" y="0" width="270" height="55" rx="12" fill="#f8fafc" stroke="#e2e8f0"/>
+    <circle cx="22" cy="19" r="6" fill="#eef6ff" stroke="#2b6cb0"/>
+    <text x="36" y="23" class="small">Inputs</text>
+    <circle cx="106" cy="19" r="6" fill="#ffffff" stroke="#64748b"/>
+    <text x="120" y="23" class="small">Processing</text>
+    <circle cx="22" cy="40" r="6" fill="#ecfeff" stroke="#0e7490"/>
+    <text x="36" y="44" class="small">Metrics</text>
+    <circle cx="106" cy="40" r="6" fill="#fff7ed" stroke="#c2410c"/>
+    <text x="120" y="44" class="small">Analysis</text>
+    <circle cx="198" cy="40" r="6" fill="#f0fdf4" stroke="#15803d"/>
+    <text x="212" y="44" class="small">Outputs</text>
+  </g>
+
+  <rect x="40" y="112" width="1200" height="150" rx="18" class="lane"/>
+  <text x="60" y="138" class="lane-title">Sequence preprocessing</text>
+
+  <rect x="70" y="160" width="235" height="72" rx="14" class="input" filter="url(#shadow)"/>
+  <text x="92" y="186" class="node-title">Raw input files</text>
+  <text x="92" y="207" class="node-text">FASTA, reference DB</text>
+  <text x="92" y="224" class="node-text">and sample metadata</text>
+
+  <rect x="365" y="155" width="235" height="82" rx="14" class="process" filter="url(#shadow)"/>
+  <text x="387" y="182" class="node-title">RAW_PREPROCESS</text>
+  <text x="387" y="203" class="node-text">clean FASTA identifiers</text>
+  <text x="387" y="220" class="node-text">write seq_headers.txt</text>
+
+  <rect x="660" y="155" width="235" height="82" rx="14" class="process" filter="url(#shadow)"/>
+  <text x="682" y="182" class="node-title">VSEARCH_TAXONOMY</text>
+  <text x="682" y="203" class="node-text">assign taxonomy</text>
+  <text x="682" y="220" class="node-text">split sequences by phylum</text>
+
+  <rect x="955" y="160" width="235" height="72" rx="14" class="output" filter="url(#shadow)"/>
+  <text x="977" y="186" class="node-title">Phylum FASTA folders</text>
+  <text x="977" y="207" class="node-text">data/vsearch_results/</text>
+
+  <path class="arrow" d="M 305 196 L 358 196"/>
+  <path class="arrow" d="M 600 196 L 653 196"/>
+  <path class="arrow" d="M 895 196 L 948 196"/>
+
+  <rect x="40" y="292" width="1200" height="160" rx="18" class="lane"/>
+  <text x="60" y="318" class="lane-title">Per-phylum sequence processing</text>
+
+  <rect x="145" y="342" width="260" height="82" rx="14" class="process" filter="url(#shadow)"/>
+  <text x="167" y="369" class="node-title">ABUNDANCE_ESTIMATION</text>
+  <text x="167" y="390" class="node-text">recover abundance and coordinates</text>
+  <text x="167" y="407" class="node-text">write MAFFT alignments</text>
+
+  <rect x="510" y="342" width="235" height="82" rx="14" class="process" filter="url(#shadow)"/>
+  <text x="532" y="369" class="node-title">OTU_GENERATION</text>
+  <text x="532" y="390" class="node-text">cluster aligned sequences</text>
+  <text x="532" y="407" class="node-text">write OTU mapping files</text>
+
+  <rect x="850" y="342" width="250" height="82" rx="14" class="process" filter="url(#shadow)"/>
+  <text x="872" y="369" class="node-title">INFORMATIVE_OTUS</text>
+  <text x="872" y="390" class="node-text">select OTUs with genetic</text>
+  <text x="872" y="407" class="node-text">and spatial signal</text>
+
+  <path class="arrow" d="M 1072 232 C 1072 274 275 275 275 334"/>
+  <path class="arrow" d="M 405 383 L 503 383"/>
+  <path class="arrow" d="M 745 383 L 843 383"/>
+
+  <rect x="40" y="482" width="1200" height="145" rx="18" class="lane"/>
+  <text x="60" y="508" class="lane-title">Informative OTU metrics</text>
+
+  <rect x="425" y="528" width="285" height="82" rx="14" class="metrics" filter="url(#shadow)"/>
+  <text x="447" y="555" class="node-title">OTU_METRICS</text>
+  <text x="447" y="576" class="node-text">diversity, abundance, and</text>
+  <text x="447" y="593" class="node-text">haplotype connections</text>
+
+  <rect x="110" y="532" width="245" height="74" rx="14" class="output" filter="url(#shadow)"/>
+  <text x="132" y="558" class="node-title">Master metrics table</text>
+  <text x="132" y="579" class="node-text">data/otus/</text>
+  <text x="132" y="596" class="node-text">div_abun_conn_master.csv</text>
+
+  <rect x="785" y="532" width="250" height="74" rx="14" class="output" filter="url(#shadow)"/>
+  <text x="807" y="558" class="node-title">Haplotype networks</text>
+  <text x="807" y="579" class="node-text">data/otus/phylum/</text>
+  <text x="807" y="596" class="node-text">haplotype_network/</text>
+
+  <rect x="1060" y="532" width="145" height="74" rx="14" class="input" filter="url(#shadow)"/>
+  <text x="1082" y="558" class="node-title">Ocean/current</text>
+  <text x="1082" y="579" class="node-text">metadata</text>
+
+  <path class="arrow" d="M 975 424 C 975 480 568 468 568 521"/>
+  <path class="arrow" d="M 425 569 L 362 569"/>
+  <path class="arrow" d="M 710 569 L 778 569"/>
+
+  <rect x="40" y="657" width="1200" height="195" rx="18" class="lane"/>
+  <text x="60" y="683" class="lane-title">Downstream analyses</text>
+
+  <rect x="110" y="712" width="260" height="82" rx="14" class="analysis" filter="url(#shadow)"/>
+  <text x="132" y="739" class="node-title">METRICS_ANALYSIS</text>
+  <text x="132" y="760" class="node-text">models, correlations,</text>
+  <text x="132" y="777" class="node-text">predictions, and figures</text>
+
+  <rect x="475" y="712" width="280" height="82" rx="14" class="analysis" filter="url(#shadow)"/>
+  <text x="497" y="739" class="node-title">HAPLOTYPE_CLUSTERING_ALL</text>
+  <text x="497" y="760" class="node-text">locality networks using</text>
+  <text x="497" y="777" class="node-text">all haplotype connections</text>
+
+  <rect x="850" y="712" width="290" height="82" rx="14" class="analysis" filter="url(#shadow)"/>
+  <text x="872" y="739" class="node-title">HAPLOTYPE_CLUSTERING_SAME_DIFF</text>
+  <text x="872" y="760" class="node-text">same- vs different-haplotype</text>
+  <text x="872" y="777" class="node-text">current analyses</text>
+
+  <rect x="110" y="815" width="260" height="42" rx="12" class="output"/>
+  <text x="132" y="840" class="node-text">data/analysis/otu_metrics_summary/</text>
+
+  <rect x="475" y="815" width="280" height="42" rx="12" class="output"/>
+  <text x="497" y="840" class="node-text">haplotype_clustering/all_haplotypes/</text>
+
+  <rect x="850" y="815" width="290" height="42" rx="12" class="output"/>
+  <text x="872" y="840" class="node-text">haplotype_clustering/same_vs_diff_currents/</text>
+
+  <path class="arrow" d="M 232 606 C 232 650 240 665 240 705"/>
+  <text x="145" y="667" class="label">master CSV</text>
+
+  <path class="arrow" d="M 910 606 C 910 650 615 660 615 705"/>
+  <text x="710" y="667" class="label">network tables</text>
+
+  <path class="arrow-light" d="M 1132 606 C 1132 650 705 660 640 705"/>
+  <text x="1018" y="667" class="label">ocean metadata</text>
+
+  <path class="arrow" d="M 755 753 L 843 753"/>
+  <path class="arrow-light" d="M 240 794 L 240 808"/>
+  <path class="arrow-light" d="M 615 794 L 615 808"/>
+  <path class="arrow-light" d="M 995 794 L 995 808"/>
+</svg>

@@ -113,7 +113,7 @@ python scripts/1_raw_data_processing/vsearch_taxonomy.py \
   -o data/vsearch_results/
 ```
 
-More details: [raw data processing](scripts/1_raw_data_processing/readme.md)
+More details: [raw data processing](scripts/1_raw_data_processing/)
 
 ### 2. Abundance Estimation
 

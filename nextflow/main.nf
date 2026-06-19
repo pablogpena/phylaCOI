@@ -50,7 +50,7 @@ process VSEARCH_TAXONOMY {
       -f . \
       -o vsearch_nested
 
-    python ${repo_dir}/workflows/nextflow/src/flatten_vsearch_results.py \
+    python ${repo_dir}/nextflow/src/flatten_vsearch_results.py \
       -i vsearch_nested \
       -o vsearch_results
     """

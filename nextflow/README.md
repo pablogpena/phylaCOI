@@ -1,6 +1,6 @@
 # Nextflow Workflow
 
-This folder contains a Nextflow workflow for running the complete `phylaCOI` pipeline from the repository root.
+This folder contains a Nextflow workflow for running the complete `phylaCOI` pipeline.
 
 The workflow uses the same input files, scripts, and output structure described in the main repository [documentation](../../README.md). It is designed for local execution on standard computers. After taxonomic assignment, the data are organized into one folder per phylum, and the downstream scripts process those phylum folders to get the final results.
 
@@ -9,14 +9,14 @@ The workflow uses the same input files, scripts, and output structure described 
 | File | Description |
 |------|-------------|
 | `main.nf` | Main Nextflow workflow. It defines the ordered processes and the files passed between them. |
-| `src/` | Small workflow helper scripts used only by this Nextflow wrapper. |
-| `nextflow.config` | Default parameters and local execution settings. |
+| `src/` | Small workflow helper scripts. |
+| `nextflow.config` | Default parameters and execution settings. |
 | `params.yaml` | Example parameter file that can be copied or edited for custom runs. |
-| `environment.yml` | Micromamba/conda environment with Nextflow and the Python, R, VSEARCH, and MAFFT dependencies required by the pipeline. |
+| `environment.yml` | Micromamba/conda environment with Nextflow and the dependencies required by the pipeline. |
 
 ## Software Environment
 
-The recommended runtime environment is named `phylaCOI`. It contains:
+The recommended environment is named `phylaCOI`. It contains:
 
 - Nextflow and Java.
 - Python packages used by the preprocessing, abundance, and OTU-generation scripts.
@@ -26,13 +26,13 @@ The recommended runtime environment is named `phylaCOI`. It contains:
 Install the environment from the repository root:
 
 ```bash
-micromamba env create -f workflows/nextflow/environment.yml
+micromamba env create -f nextflow/environment.yml
 ```
 
 Alternatively, create the same environment with conda:
 
 ```bash
-conda env create -f workflows/nextflow/environment.yml
+conda env create -f nextflow/environment.yml
 ```
 
 Activate it before running the workflow:
@@ -338,15 +338,15 @@ For more information, see [Same vs different haplotypes current](../../scripts/6
 Run from the repository root after activating the `phylaCOI` environment:
 
 ```bash
-nextflow run workflows/nextflow/main.nf \
-  -c workflows/nextflow/nextflow.config
+nextflow run nextflow/main.nf \
+  -c nextflow/nextflow.config
 ```
 
 To resume after an interrupted run:
 
 ```bash
-nextflow run workflows/nextflow/main.nf \
-  -c workflows/nextflow/nextflow.config \
+nextflow run nextflow/main.nf \
+  -c nextflow/nextflow.config \
   -resume
 ```
 
@@ -357,8 +357,8 @@ Nextflow stores execution metadata in the hidden `.nextflow/` folder and process
 Parameters can be changed directly in the command:
 
 ```bash
-nextflow run workflows/nextflow/main.nf \
-  -c workflows/nextflow/nextflow.config \
+nextflow run nextflow/main.nf \
+  -c nextflow/nextflow.config \
   --raw_fasta data/raw/my_metabarcoding.fasta \
   --reference_db data/raw/my_reference_db.fasta \
   --sample_metadata data/raw/my_sample_metadata.csv \
@@ -369,9 +369,9 @@ nextflow run workflows/nextflow/main.nf \
 They can also be changed in a parameter file:
 
 ```bash
-nextflow run workflows/nextflow/main.nf \
-  -c workflows/nextflow/nextflow.config \
-  -params-file workflows/nextflow/params.yaml
+nextflow run nextflow/main.nf \
+  -c nextflow/nextflow.config \
+  -params-file nextflow/params.yaml
 ```
 
 Example `params.yaml`:

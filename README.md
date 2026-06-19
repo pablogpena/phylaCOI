@@ -128,7 +128,7 @@ python scripts/2_abundance_estimation/get_abundance.py \
   -a 1
 ```
 
-More details: [abundance estimation](scripts/2_abundance_estimation/readme.md)
+More details: [abundance estimation](scripts/2_abundance_estimation/)
 
 ### 3. OTU Generation
 
@@ -149,7 +149,7 @@ Rscript scripts/3_otu_generation/get_informative_otus.R \
   -o data/otus
 ```
 
-More details: [OTU generation](scripts/3_otu_generation/README.md)
+More details: [OTU generation](scripts/3_otu_generation/)
 
 ### 4. OTU Metrics
 
@@ -167,7 +167,7 @@ This step writes:
 - per-phylum haplotype-network inputs to `data/otus/<phylum>/haplotype_network/`
 - the combined metrics table to `data/otus/div_abun_conn_master.csv`
 
-More details: [OTU metrics](scripts/4_otu_metrics/README.md)
+More details: [OTU metrics](scripts/4_otu_metrics/)
 
 ### 5. Metrics Analysis
 
@@ -180,7 +180,7 @@ Rscript scripts/5_metrics_analysis/analyze_otu_metrics.R \
   --min-otus 10
 ```
 
-More details: [metrics analysis](scripts/5_metrics_analysis/README.md)
+More details: [metrics analysis](scripts/5_metrics_analysis/)
 
 ### 6. Haplotype Clustering
 
@@ -202,7 +202,7 @@ Rscript scripts/6_haplotype_clustering/run_same_vs_diff_currents.R \
   --all-output data/analysis/haplotype_clustering/all_haplotypes
 ```
 
-More details: [haplotype clustering](scripts/6_haplotype_clustering/README.md)
+More details: [haplotype clustering](scripts/6_haplotype_clustering/)
 
 ## Main Outputs
 
@@ -222,17 +222,17 @@ The pipeline uses Python, R, VSEARCH, and MAFFT. Each step README lists the exac
 
 Recommended reading before running a step:
 
-- [Raw data processing](scripts/1_raw_data_processing/readme.md)
-- [Abundance estimation](scripts/2_abundance_estimation/readme.md)
-- [OTU generation](scripts/3_otu_generation/README.md)
-- [OTU metrics](scripts/4_otu_metrics/README.md)
-- [Metrics analysis](scripts/5_metrics_analysis/README.md)
-- [Haplotype clustering](scripts/6_haplotype_clustering/README.md)
+- [Raw data processing](scripts/1_raw_data_processing/)
+- [Abundance estimation](scripts/2_abundance_estimation/)
+- [OTU generation](scripts/3_otu_generation/)
+- [OTU metrics](scripts/4_otu_metrics/)
+- [Metrics analysis](scripts/5_metrics_analysis/)
+- [Haplotype clustering](scripts/6_haplotype_clustering/)
 
 
 ## Nextflow Execution
 
-The Nextflow workflow automates the same six pipeline stages described in the modular pipeline above. It uses the default input paths in `data/raw/` and writes the standard outputs under `data/`. For input parameters, custom runs, outputs, and environment details, see [Nextflow](nextflow/README.md).
+The Nextflow workflow automates the same six pipeline stages described in the modular pipeline above. It uses the default input paths in `data/raw/` and writes the standard outputs under `data/`. For input parameters, custom runs, outputs, and environment details, see [Nextflow](nextflow/).
 
 <img src="./nextflow/assets/PhylcaCOI_NextFlow.svg" alt="phylaCOI Nextflow workflow" width="100%">
 
